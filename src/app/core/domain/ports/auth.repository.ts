@@ -1,7 +1,8 @@
-import { Observable } from "rxjs";
-import { IAuthResponse } from "../models/auth-response.model";
-import { ICredentials } from "../models/credentials.model";
+import { AuthResponse } from "@core/domain/models/auth-response.model";
+import { Credentials } from "@core/domain/models/credentials.model";
 
-export abstract class AuthRepository {
-    abstract login(credentials: ICredentials): Observable<IAuthResponse>;
+export const AUTH_REPOSITORY = Symbol('AUTH_REPOSITORY');
+
+export interface AuthRepository {
+    login(credentials: Credentials): Promise<AuthResponse>;
 }

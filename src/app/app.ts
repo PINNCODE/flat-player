@@ -1,8 +1,8 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { LoginUseCase } from '@core/application/usecases/login.usecase';
-import { Credentials, ICredentials } from '@core/domain/models/credentials.model';
+import { Credentials } from '@core/domain/models/credentials.model';
+import { environment } from '../environments/environment';
 
 @Component({
   selector: 'app-root',
@@ -13,35 +13,50 @@ import { Credentials, ICredentials } from '@core/domain/models/credentials.model
 })
 export class App implements OnInit {
   protected readonly title = signal('flat-player');
+  protected readonly loginStatus = signal<'disabled' | 'loading' | 'success' | 'error'>('disabled');
+  protected readonly loginMessage = signal('');
   private readonly loginUseCase = inject(LoginUseCase);
-  private readonly destroyRef = inject(DestroyRef);
-
-  private readonly credentialsMock: ICredentials = {
-    user: 'admin',
-    password: 'admin',
-    host: 'http://localhost:8080',
-  };
 
   ngOnInit(): void {
+    void this.runLogin();
+  }
+
+  private async runLogin(): Promise<void> {
+    const credentials = this.getAutoLoginCredentials();
+    if (!credentials) {
+      this.loginStatus.set('disabled');
+      this.loginMessage.set('Autologin deshabilitado. Configuralo en environments si lo necesitas.');
+      return;
+    }
+
     try {
-      const credentials = this.buildCredentials(this.credentialsMock);
-      this.loginUseCase
-        .execute(credentials)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          next: (response) => {
-            console.log('Login successful:', response);
-          },
-          error: (error) => {
-            console.error('Login failed:', error);
-          }
-        });
+      this.loginStatus.set('loading');
+      this.loginMessage.set('Iniciando sesion...');
+
+      await this.loginUseCase.execute(credentials);
+
+      this.loginStatus.set('success');
+      this.loginMessage.set('Login ejecutado correctamente.');
     } catch (error) {
-      console.error('Error during login:', error);
+      this.loginStatus.set('error');
+      this.loginMessage.set(this.resolveLoginErrorMessage(error));
     }
   }
 
-  private buildCredentials(input: ICredentials): ICredentials {
-    return new Credentials(input.user, input.password, input.host).credentialsObject;
+  private getAutoLoginCredentials(): Credentials | null {
+    const { autoLogin } = environment;
+    if (!autoLogin.enabled) {
+      return null;
+    }
+
+    return new Credentials(autoLogin.user, autoLogin.password, autoLogin.host);
+  }
+
+  private resolveLoginErrorMessage(error: unknown): string {
+    if (error instanceof Error && error.message) {
+      return error.message;
+    }
+
+    return 'No se pudo completar el login.';
   }
 }

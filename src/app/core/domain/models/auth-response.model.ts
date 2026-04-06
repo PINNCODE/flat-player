@@ -1,9 +1,9 @@
-export interface IAuthResponse {
-    user_info:   IUserInfo;
-    server_info: IServerInfo;
+export interface AuthResponse {
+    user_info:   UserInfo;
+    server_info: ServerInfo;
 }
 
-export interface IServerInfo {
+export interface ServerInfo {
     url:             string;
     port:            string;
     https_port:      string;
@@ -11,11 +11,11 @@ export interface IServerInfo {
     rtmp_port:       string;
     timezone:        string;
     timestamp_now:   number;
-    time_now:        Date;
+    time_now:        string;
     process:         boolean;
 }
 
-export interface IUserInfo {
+export interface UserInfo {
     username:               string;
     password:               string;
     message:                string;

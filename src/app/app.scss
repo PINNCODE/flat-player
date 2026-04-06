@@ -1,0 +1,40 @@
+:host {
+  display: block;
+  min-height: 100dvh;
+  background: linear-gradient(180deg, #f6f8fb 0%, #eef2f8 100%);
+  color: #1f2937;
+}
+
+.app-shell {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.status-card {
+  background: #ffffff;
+  border: 1px solid #dbe3ef;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+}
+
+.status-card h1 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.status {
+  margin: 0.65rem 0 0;
+  color: #475569;
+}
+
+.status.success {
+  color: #166534;
+}
+
+.status.error {
+  color: #b91c1c;
+}

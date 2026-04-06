@@ -1,14 +1,14 @@
-import { Injectable } from "@angular/core";
-import { AuthRepository } from "../../domain/ports/auth.repository";
-import { ICredentials } from "../../domain/models/credentials.model";
+import { Inject, Injectable } from "@angular/core";
+import { Credentials } from "@core/domain/models/credentials.model";
+import { AUTH_REPOSITORY, AuthRepository } from "@core/domain/ports/auth.repository";
 
 @Injectable({
     providedIn: "root"
 })
 export class LoginUseCase{
-    constructor(private authRepository: AuthRepository){}
+    constructor(@Inject(AUTH_REPOSITORY) private readonly authRepository: AuthRepository){}
 
-    execute(credentials: ICredentials) {
+    execute(credentials: Credentials) {
         return this.authRepository.login(credentials);
     }
 }

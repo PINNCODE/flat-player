@@ -15,30 +15,4 @@ export class Credentials {
         }
     }
 
-    get username(): string {
-        return this.user;
-    }
-
-    get userPassword(): string {
-        return this.password;
-    }
-
-    get userHost(): string {
-        return this.host;
-    }
-
-    get credentialsObject(): ICredentials {
-        return {
-            user: this.user,
-            password: this.password,
-            host: this.host,
-        }
-    }
-
-}
-
-export interface ICredentials {
-    user: string;
-    password: string;
-    host: string;
 }
