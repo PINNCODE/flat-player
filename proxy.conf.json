@@ -1,0 +1,11 @@
+{
+  "/iptv": {
+    "target": "https://ftvpro.net:8443",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug",
+    "pathRewrite": {
+      "^/iptv": ""
+    }
+  }
+}
