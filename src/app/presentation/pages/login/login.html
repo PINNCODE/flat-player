@@ -11,51 +11,67 @@
         </section>
 
         <section class="login-page__form" aria-label="Login form">
-            <form (submit)="onSubmit($event)" class="login-page__form-content">
+            <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-page__form-content">
+                <h1 class="login-page__title">Login</h1>
                 <div class="login-page__form-group">
                     <label for="host" class="login-page__form-label">Host</label>
                     <input
                         type="url"
                         id="host"
-                        name="host"
+                        formControlName="host"
                         class="login-page__form-input"
                         placeholder="https://example.com"
                         autocomplete="url"
+                        [attr.aria-invalid]="hasControlError('host')"
                         required
                     />
+                    @if (hasControlError('host')) {
+                        <p class="login-page__form-error">{{ getControlErrorMessage('host') }}</p>
+                    }
                 </div>
                 <div class="login-page__form-group">
                     <label for="username" class="login-page__form-label">Username</label>
                     <input
                         type="text"
                         id="username"
-                        name="username"
+                        formControlName="username"
                         class="login-page__form-input"
                         autocomplete="username"
+                        [attr.aria-invalid]="hasControlError('username')"
                         required
                     />
+                    @if (hasControlError('username')) {
+                        <p class="login-page__form-error">{{ getControlErrorMessage('username') }}</p>
+                    }
                 </div>
                 <div class="login-page__form-group">
                     <label for="password" class="login-page__form-label">Password</label>
                     <input
                         type="password"
                         id="password"
-                        name="password"
+                        formControlName="password"
                         class="login-page__form-input"
                         autocomplete="current-password"
+                        [attr.aria-invalid]="hasControlError('password')"
                         required
                     />
+                    @if (hasControlError('password')) {
+                        <p class="login-page__form-error">{{ getControlErrorMessage('password') }}</p>
+                    }
                 </div>
                 <button
                     type="submit"
                     class="login-page__form-button"
+                    [disabled]="isSubmitting()"
                 >
-                    Login
+                    {{ isSubmitting() ? 'Loading...' : 'Login' }}
                 </button>
-                <p class="login-page__nav-hint" role="note">
-                    Usa <kbd>&#9650;</kbd> <kbd>&#9660;</kbd> para moverte entre campos
-                    &middot; <kbd>OK</kbd> para ingresar
-                </p>
+                @if (submitError()) {
+                    <p class="login-page__form-feedback login-page__form-feedback--error" role="alert">{{ submitError() }}</p>
+                }
+                @if (submitSuccess()) {
+                    <p class="login-page__form-feedback login-page__form-feedback--success" role="status">{{ submitSuccess() }}</p>
+                }
             </form>
         </section>
     </div>
