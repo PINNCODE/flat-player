@@ -1,0 +1,253 @@
+// ── orbes decorativos ─────────────────────────────────────────
+$orb-cyan:  #00d2ff;
+$orb-blue:  #007acc;
+$orb-deep:  #0b1220;
+
+.login-page {
+    position: relative;
+    box-sizing: border-box;
+    display: grid;
+    place-items: center;
+    height: 100dvh;
+    padding: 2rem;
+    overflow: hidden;
+    background: linear-gradient(135deg, #060d1a 0%, #0d2137 55%, #0f3460 100%);
+
+    // Orbe superior izquierdo
+    &::before {
+        content: '';
+        position: absolute;
+        top: -8rem;
+        left: -8rem;
+        width: 28rem;
+        height: 28rem;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(0, 122, 204, 0.55) 0%, transparent 70%);
+        filter: blur(40px);
+        pointer-events: none;
+    }
+
+    // Orbe inferior derecho
+    &::after {
+        content: '';
+        position: absolute;
+        bottom: -8rem;
+        right: -6rem;
+        width: 32rem;
+        height: 32rem;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(0, 210, 255, 0.35) 0%, transparent 70%);
+        filter: blur(56px);
+        pointer-events: none;
+    }
+}
+
+.login-page__layout {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(20rem, 26rem);
+    align-items: center;
+    gap: 2rem;
+    width: min(100%, 68rem);
+}
+
+.login-page__welcome {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0 1.5rem 0 0;
+    text-align: left;
+    max-width: 34rem;
+}
+
+// ── tarjeta glass ──────────────────────────────────────────────
+.login-page__form {
+    justify-self: end;
+    width: min(100%, 26rem);
+    padding: 2.5rem 2rem;
+    border-radius: 1.25rem;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+
+// ── título ─────────────────────────────────────────────────────
+.login-page__title {
+    margin: 0 0 0.375rem;
+    text-align: left;
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #ffffff;
+}
+
+// ── copy de bienvenida ─────────────────────────────────────────
+.login-page__welcome-title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #ffffff;
+}
+
+.login-page__welcome-text {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.65;
+    color: rgba(255, 255, 255, 0.76);
+}
+
+// ── form layout ────────────────────────────────────────────────
+.login-page__form-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.125rem;
+}
+
+.login-page__form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+// ── labels ─────────────────────────────────────────────────────
+.login-page__form-label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+// ── animación glow para inputs ────────────────────────────────
+@keyframes input-glow {
+    0%   { box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.25), 0 0 10px rgba(0, 210, 255, 0.15); }
+    50%  { box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.5),  0 0 22px rgba(0, 210, 255, 0.38); }
+    100% { box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.25), 0 0 10px rgba(0, 210, 255, 0.15); }
+}
+
+// ── inputs ─────────────────────────────────────────────────────
+.login-page__form-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.06);
+    color: #ffffff;
+    font: inherit;
+    font-size: 0.9375rem;
+    box-sizing: border-box;
+    transition:
+        border-color 160ms ease,
+        background 160ms ease;
+
+    &::placeholder {
+        color: rgba(255, 255, 255, 0.25);
+    }
+
+    &:focus {
+        outline: none;
+        border-color: rgba(0, 210, 255, 0.85);
+        background: rgba(255, 255, 255, 0.1);
+        animation: input-glow 2s ease-in-out infinite;
+    }
+}
+
+// ── hint de navegación ─────────────────────────────────────────
+.login-page__nav-hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    margin: 0.25rem 0 0;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.3);
+
+    kbd {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.75rem;
+        height: 1.75rem;
+        padding: 0;
+        border-radius: 0.4rem;
+        border: 1px solid rgba(0, 210, 255, 0.25);
+        background: rgba(0, 122, 204, 0.15);
+        font: inherit;
+        font-size: 0.75rem;
+        line-height: 1;
+        color: rgba(0, 210, 255, 0.75);
+        letter-spacing: 0;
+        box-shadow: 0 0 6px rgba(0, 210, 255, 0.15);
+    }
+}
+
+// ── botón ──────────────────────────────────────────────────────
+.login-page__form-button {
+    margin-top: 0.5rem;
+    width: 100%;
+    padding: 0.9rem 1rem;
+    border: 0;
+    border-radius: 0.75rem;
+    background: linear-gradient(135deg, #007acc 0%, #005fa3 100%);
+    color: #ffffff;
+    font: inherit;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0, 122, 204, 0.45);
+    transition:
+        background 180ms ease,
+        box-shadow 180ms ease,
+        transform 100ms ease;
+
+    &:hover {
+        background: linear-gradient(135deg, #0088e0 0%, #006bb8 100%);
+        box-shadow: 0 6px 28px rgba(0, 122, 204, 0.6);
+        transform: translateY(-1px);
+    }
+
+    &:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 12px rgba(0, 122, 204, 0.4);
+    }
+
+    &:focus-visible {
+        outline: 2px solid #00d2ff;
+        outline-offset: 3px;
+    }
+}
+
+@media (max-width: 640px) {
+    .login-page {
+        padding: 1.25rem;
+    }
+
+    .login-page__layout {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 1.25rem;
+        width: min(100%, 28rem);
+    }
+
+    .login-page__welcome {
+        padding: 0;
+        text-align: center;
+        max-width: none;
+    }
+
+    .login-page__form {
+        justify-self: stretch;
+        padding: 2rem 1.25rem;
+    }
+
+    .login-page__title {
+        text-align: center;
+    }
+}

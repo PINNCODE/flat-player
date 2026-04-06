@@ -1,10 +1,1 @@
-<main class="app-shell">
-  <section class="status-card" aria-live="polite">
-    <h1>{{ title() }}</h1>
-    <p class="status" [class.success]="loginStatus() === 'success'" [class.error]="loginStatus() === 'error'">
-      {{ loginMessage() }}
-    </p>
-  </section>
-
-  <router-outlet />
-</main>
+<router-outlet />

@@ -1,8 +1,7 @@
 :host {
   display: block;
-  min-height: 100dvh;
-  background: linear-gradient(180deg, #f6f8fb 0%, #eef2f8 100%);
-  color: #1f2937;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 .app-shell {

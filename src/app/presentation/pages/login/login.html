@@ -1,0 +1,62 @@
+<div class="login-page">
+    <div class="login-page__layout">
+        <section class="login-page__welcome" aria-label="Welcome message">
+            <p class="login-page__welcome-title">Welcome to Flat player</p>
+            <p class="login-page__welcome-text">
+                Flat player is a lightweight IPTV player that allows you to access live TV using your existing Xtream Codes credentials.
+            </p>
+            <p class="login-page__welcome-text">
+                Simply log in with your server URL, username, and password to start streaming instantly.
+            </p>
+        </section>
+
+        <section class="login-page__form" aria-label="Login form">
+            <form (submit)="onSubmit($event)" class="login-page__form-content">
+                <div class="login-page__form-group">
+                    <label for="host" class="login-page__form-label">Host</label>
+                    <input
+                        type="url"
+                        id="host"
+                        name="host"
+                        class="login-page__form-input"
+                        placeholder="https://example.com"
+                        autocomplete="url"
+                        required
+                    />
+                </div>
+                <div class="login-page__form-group">
+                    <label for="username" class="login-page__form-label">Username</label>
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        class="login-page__form-input"
+                        autocomplete="username"
+                        required
+                    />
+                </div>
+                <div class="login-page__form-group">
+                    <label for="password" class="login-page__form-label">Password</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        class="login-page__form-input"
+                        autocomplete="current-password"
+                        required
+                    />
+                </div>
+                <button
+                    type="submit"
+                    class="login-page__form-button"
+                >
+                    Login
+                </button>
+                <p class="login-page__nav-hint" role="note">
+                    Usa <kbd>&#9650;</kbd> <kbd>&#9660;</kbd> para moverte entre campos
+                    &middot; <kbd>OK</kbd> para ingresar
+                </p>
+            </form>
+        </section>
+    </div>
+</div>
