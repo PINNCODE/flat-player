@@ -5,6 +5,8 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "copy:wrapper": "rsync -a --delete --exclude '.project' --exclude '.settings/' --exclude '.tproject' --exclude 'config.xml' --exclude 'icon.png' dist/flat-player/browser/ ../flatPlayerWrapper/",
+    "build:wrapper": "npm run build && npm run copy:wrapper",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
