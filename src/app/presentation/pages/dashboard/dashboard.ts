@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, ViewChild, computed, inject, signal, viewChild } from '@angular/core';
-import { ChangeChannelUseCase } from '@core/application/usecases/change-channel.usecase';
+import { ChangeChannelUseCase, ChannelSelection } from '@core/application/usecases/change-channel.usecase';
 import { GetTvCatalogUseCase } from '@core/application/usecases/get-tv-catalog.usecase';
 import { LogoutUseCase } from '@core/application/usecases/logout.usecase';
 import { ResolveStreamUrlUseCase } from '@core/application/usecases/resolve-stream-url.usecase';
+import { SearchChannelsUseCase } from '@core/application/usecases/search-channels.usecase';
 import { TrackPlaybackErrorUseCase } from '@core/application/usecases/track-playback-error.usecase';
 import { GetChannelEpgUseCase } from '@core/application/usecases/get-channel-epg.usecase';
 import { TvCategory, TvChannel } from '@core/domain/models/tv-catalog.model';
@@ -12,7 +13,7 @@ import { Router } from '@angular/router';
 import { VideoPlaybackFacade } from '../../services/video-playback.facade';
 import { environment } from '../../../../environments/environment';
 
-type OverlayPanel = 'menu' | 'categories' | 'channels';
+type OverlayPanel = 'menu' | 'categories' | 'channels' | 'search';
 type OverlayTrigger = 'dpad' | 'ok';
 
 interface MenuItem {
@@ -52,9 +53,17 @@ export class Dashboard implements AfterViewInit {
   protected readonly currentChannelGuide = signal<readonly EpgListing[]>([]);
   protected readonly focusedChannelGuide = signal<readonly EpgListing[]>([]);
 
-  protected readonly focusedChannel = computed(
-    () => this.focusedChannels()[this.focusedChannelIndex()] ?? null,
-  );
+  protected readonly searchQuery = signal('');
+  protected readonly searchResults = signal<readonly ChannelSelection[]>([]);
+  protected readonly isSearchInputFocused = signal(true);
+  protected readonly focusedSearchResultIndex = signal(0);
+
+  protected readonly focusedChannel = computed(() => {
+    if (this.activePanel() === 'search') {
+      return this.searchResults()[this.focusedSearchResultIndex()]?.channel ?? null;
+    }
+    return this.focusedChannels()[this.focusedChannelIndex()] ?? null;
+  });
 
   protected readonly infoBarVisible = signal(false);
   protected readonly videoMetaVisible = signal(false);
@@ -103,11 +112,21 @@ export class Dashboard implements AfterViewInit {
     this.focusedChannels().slice(this.channelWindowStart(), this.channelWindowStart() + 9),
   );
 
+  protected readonly searchResultWindowStart = computed(() =>
+    this.resolveWindowStart(this.focusedSearchResultIndex(), this.searchResults().length, 9),
+  );
+
+  protected readonly visibleSearchResults = computed(() =>
+    this.searchResults().slice(this.searchResultWindowStart(), this.searchResultWindowStart() + 9),
+  );
+
   private readonly videoPlayerRef = viewChild<ElementRef<HTMLVideoElement>>('videoPlayer');
   @ViewChild('channelsList') channelsList?: ElementRef<HTMLUListElement>;
+  @ViewChild('searchInput') searchInput?: ElementRef<HTMLInputElement>;
 
   private readonly getTvCatalogUseCase = inject(GetTvCatalogUseCase);
   private readonly changeChannelUseCase = inject(ChangeChannelUseCase);
+  private readonly searchChannelsUseCase = inject(SearchChannelsUseCase);
   private readonly logoutUseCase = inject(LogoutUseCase);
   private readonly resolveStreamUrlUseCase = inject(ResolveStreamUrlUseCase);
   private readonly trackPlaybackErrorUseCase = inject(TrackPlaybackErrorUseCase);
@@ -178,6 +197,34 @@ export class Dashboard implements AfterViewInit {
 
   protected isChannelFocused(index: number): boolean {
     return this.activePanel() === 'channels' && this.focusedChannelIndex() === index;
+  }
+
+  protected isSearchResultFocused(index: number): boolean {
+    return this.activePanel() === 'search' && !this.isSearchInputFocused() && this.focusedSearchResultIndex() === index;
+  }
+
+  onSearchQueryChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const query = input.value;
+    this.searchQuery.set(query);
+    
+    if (query.trim().length === 0) {
+      this.searchResults.set([]);
+      this.focusedSearchResultIndex.set(0);
+      this.focusedChannelGuide.set([]);
+      return;
+    }
+
+    const results = this.searchChannelsUseCase.execute({
+      categories: this.categories(),
+      query
+    });
+    this.searchResults.set(results);
+    this.focusedSearchResultIndex.set(0);
+    
+    if (results.length > 0 && !this.isSearchInputFocused()) {
+       this.loadFocusedChannelEpg();
+    }
   }
 
   protected categoryTrackBy(_: number, category: TvCategory): string {
@@ -260,6 +307,9 @@ export class Dashboard implements AfterViewInit {
       case 'channels':
         this.handleChannelNavigation(action);
         return;
+      case 'search':
+        this.handleSearchNavigation(action);
+        return;
     }
   }
 
@@ -294,7 +344,9 @@ export class Dashboard implements AfterViewInit {
         this.activePanel.set('categories');
         return;
       case 'search':
-        this.showToast('Busqueda en desarrollo.');
+        this.activePanel.set('search');
+        this.isSearchInputFocused.set(true);
+        setTimeout(() => this.searchInput?.nativeElement.focus(), 0);
         return;
       case 'settings':
         this.logout();
@@ -365,6 +417,49 @@ export class Dashboard implements AfterViewInit {
     this.showInfoBar();
   }
 
+  private handleSearchNavigation(action: 'up' | 'down' | 'left' | 'right' | 'ok'): void {
+    if (action === 'left') {
+      this.activePanel.set('menu');
+      return;
+    }
+
+    if (this.isSearchInputFocused()) {
+      if (action === 'down' && this.searchResults().length > 0) {
+        this.isSearchInputFocused.set(false);
+        this.searchInput?.nativeElement.blur();
+        this.focusedSearchResultIndex.set(0);
+        this.loadFocusedChannelEpg();
+      }
+      return;
+    }
+
+    if (action === 'up') {
+      if (this.focusedSearchResultIndex() === 0) {
+        this.isSearchInputFocused.set(true);
+        this.searchInput?.nativeElement.focus();
+        this.focusedChannelGuide.set([]);
+      } else {
+        this.moveSearchResultFocus(-1);
+      }
+      return;
+    }
+
+    if (action === 'down') {
+      this.moveSearchResultFocus(1);
+      return;
+    }
+
+    if (action === 'ok') {
+      const selection = this.searchResults()[this.focusedSearchResultIndex()];
+      if (selection) {
+        this.applyChannelSelection(selection.categoryIndex, selection.channelIndex, selection.channel);
+        this.overlayVisible.set(false);
+        this.showInfoBar();
+      }
+      return;
+    }
+  }
+
   private moveMenuFocus(delta: number): void {
     const length = this.menuItems.length;
 
@@ -393,6 +488,19 @@ export class Dashboard implements AfterViewInit {
 
     this.focusedChannelIndex.update(
       (current) => ((current + delta) % channelCount + channelCount) % channelCount,
+    );
+    this.loadFocusedChannelEpg();
+  }
+
+  private moveSearchResultFocus(delta: number): void {
+    const resultsCount = this.searchResults().length;
+
+    if (resultsCount === 0) {
+      return;
+    }
+
+    this.focusedSearchResultIndex.update(
+      (current) => ((current + delta) % resultsCount + resultsCount) % resultsCount,
     );
     this.loadFocusedChannelEpg();
   }

@@ -3,217 +3,237 @@
     <video #videoPlayer class="tv-dashboard__video-player" autoplay playsinline></video>
     <div class="tv-dashboard__video-glow"></div>
     @if (videoMetaVisible()) {
-      <div class="tv-dashboard__video-meta">
-        <p class="tv-dashboard__video-status">LIVE</p>
-        <h1 class="tv-dashboard__video-channel">{{ channelLabel() }}</h1>
-      </div>
+    <div class="tv-dashboard__video-meta">
+      <p class="tv-dashboard__video-status">LIVE</p>
+      <h1 class="tv-dashboard__video-channel">{{ channelLabel() }}</h1>
+    </div>
     }
   </div>
 
   @if (overlayVisible()) {
-    <div
-      class="tv-dashboard__overlay"
-      [class.tv-dashboard__overlay--menu]="activePanel() === 'menu'"
-      [class.tv-dashboard__overlay--categories]="activePanel() === 'categories'"
-      [class.tv-dashboard__overlay--channels]="activePanel() === 'channels'"
-      aria-label="Interfaz de navegacion"
-    >
-      <nav class="tv-dashboard__panel tv-dashboard__panel--menu" aria-label="Menu lateral">
-        @for (item of menuItems; track item.id; let index = $index) {
-          <button
-            type="button"
-            class="tv-dashboard__menu-item"
-            [class.tv-dashboard__menu-item--focused]="isMenuFocused(index)"
-            [attr.aria-label]="item.label"
-          >
-            <span class="tv-dashboard__menu-icon">
-              @switch (item.id) {
-                @case ('home') {
-                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                    <polyline points="9 22 9 12 15 12 15 22"/>
-                  </svg>
-                }
-                @case ('guide') {
-                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <rect x="2" y="3" width="20" height="14" rx="2"/>
-                    <line x1="8" y1="21" x2="16" y2="21"/>
-                    <line x1="12" y1="17" x2="12" y2="21"/>
-                  </svg>
-                }
-                @case ('search') {
-                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <circle cx="11" cy="11" r="8"/>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                  </svg>
-                }
-                @case ('settings') {
-                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <circle cx="12" cy="12" r="3"/>
-                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                  </svg>
-                }
-              }
-            </span>
-            <span class="tv-dashboard__menu-text">{{ item.label }}</span>
-          </button>
+  <div class="tv-dashboard__overlay" [class.tv-dashboard__overlay--menu]="activePanel() === 'menu'"
+    [class.tv-dashboard__overlay--categories]="activePanel() === 'categories'"
+    [class.tv-dashboard__overlay--channels]="activePanel() === 'channels'"
+    [class.tv-dashboard__overlay--search]="activePanel() === 'search'" aria-label="Interfaz de navegacion">
+    <nav class="tv-dashboard__panel tv-dashboard__panel--menu" aria-label="Menu lateral">
+      @for (item of menuItems; track item.id; let index = $index) {
+      <button type="button" class="tv-dashboard__menu-item"
+        [class.tv-dashboard__menu-item--focused]="isMenuFocused(index)" [attr.aria-label]="item.label">
+        <span class="tv-dashboard__menu-icon">
+          @switch (item.id) {
+          @case ('home') {
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>
+          }
+          @case ('guide') {
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="2" y="3" width="20" height="14" rx="2" />
+            <line x1="8" y1="21" x2="16" y2="21" />
+            <line x1="12" y1="17" x2="12" y2="21" />
+          </svg>
+          }
+          @case ('search') {
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          }
+          @case ('settings') {
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="3" />
+            <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          </svg>
+          }
+          }
+        </span>
+        <span class="tv-dashboard__menu-text">{{ item.label }}</span>
+      </button>
+      }
+    </nav>
+
+    @if (activePanel() === 'categories' || activePanel() === 'channels') {
+    <section class="tv-dashboard__panel tv-dashboard__panel--categories" aria-label="Categorias">
+      <header class="tv-dashboard__panel-header">
+        <h2 class="tv-dashboard__panel-title">Categorias</h2>
+        <span class="tv-dashboard__panel-hint">{{ categories().length }} disponibles</span>
+      </header>
+      <div class="tv-dashboard__list-container">
+        @if (hasCategoryOverflowUp()) {
+        <span class="tv-dashboard__overflow-indicator tv-dashboard__overflow-indicator--top">Mas arriba</span>
         }
-      </nav>
 
-      @if (activePanel() !== 'menu') {
-        <section class="tv-dashboard__panel tv-dashboard__panel--categories" aria-label="Categorias">
-        <header class="tv-dashboard__panel-header">
-          <h2 class="tv-dashboard__panel-title">Categorias</h2>
-          <span class="tv-dashboard__panel-hint">{{ categories().length }} disponibles</span>
-        </header>
-        <div class="tv-dashboard__list-container">
-          @if (hasCategoryOverflowUp()) {
-            <span class="tv-dashboard__overflow-indicator tv-dashboard__overflow-indicator--top">Mas arriba</span>
+        <ul class="tv-dashboard__list" aria-label="Lista de categorias">
+          @for (category of visibleCategories(); track category.id; let index = $index) {
+          <li class="tv-dashboard__list-item"
+            [class.tv-dashboard__list-item--focused]="isCategoryFocused(categoryWindowStart() + index)"
+            [class.tv-dashboard__list-item--active]="selectedCategoryIndex() === categoryWindowStart() + index">
+            <span class="tv-dashboard__list-icon">{{ category.iconLabel }}</span>
+            <span class="tv-dashboard__list-label">{{ category.name }}</span>
+          </li>
           }
+        </ul>
 
-          <ul class="tv-dashboard__list" aria-label="Lista de categorias">
-            @for (category of visibleCategories(); track category.id; let index = $index) {
-              <li
-                class="tv-dashboard__list-item"
-                [class.tv-dashboard__list-item--focused]="isCategoryFocused(categoryWindowStart() + index)"
-                [class.tv-dashboard__list-item--active]="selectedCategoryIndex() === categoryWindowStart() + index"
-              >
-                <span class="tv-dashboard__list-icon">{{ category.iconLabel }}</span>
-                <span class="tv-dashboard__list-label">{{ category.name }}</span>
-              </li>
-            }
-          </ul>
+        @if (hasCategoryOverflowDown()) {
+        <span class="tv-dashboard__overflow-indicator tv-dashboard__overflow-indicator--bottom">Mas abajo</span>
+        }
+      </div>
+    </section>
+    }
 
-          @if (hasCategoryOverflowDown()) {
-            <span class="tv-dashboard__overflow-indicator tv-dashboard__overflow-indicator--bottom">Mas abajo</span>
-          }
-        </div>
-      </section>
-      }
+    @if (activePanel() === 'channels') {
+    <section class="tv-dashboard__panel tv-dashboard__panel--channels" aria-label="Canales">
+      <header class="tv-dashboard__panel-header">
+        <h2 class="tv-dashboard__panel-title">Canales</h2>
+        <span class="tv-dashboard__panel-hint">{{ focusedChannels().length }} resultados</span>
+      </header>
+      <div class="tv-dashboard__list-container">
+        @if (hasChannelOverflowUp()) {
+        <span class="tv-dashboard__overflow-indicator tv-dashboard__overflow-indicator--top">Mas arriba</span>
+        }
 
-      @if (activePanel() === 'channels') {
-        <section class="tv-dashboard__panel tv-dashboard__panel--channels" aria-label="Canales">
-        <header class="tv-dashboard__panel-header">
-          <h2 class="tv-dashboard__panel-title">Canales</h2>
-          <span class="tv-dashboard__panel-hint">{{ focusedChannels().length }} resultados</span>
-        </header>
-        <div class="tv-dashboard__list-container">
-          @if (hasChannelOverflowUp()) {
-            <span class="tv-dashboard__overflow-indicator tv-dashboard__overflow-indicator--top">Mas arriba</span>
-          }
-
-          <ul #channelsList class="tv-dashboard__list" aria-label="Lista de canales">
-            @for (channel of visibleChannels(); track channel.id; let index = $index) {
-              <li
-                class="tv-dashboard__channel-item"
-                [class.tv-dashboard__channel-item--focused]="isChannelFocused(channelWindowStart() + index)"
-                [class.tv-dashboard__channel-item--active]="currentChannel()?.id === channel.id"
-              >
-                @if (channel.logoUrl) {
-                  <img
-                    class="tv-dashboard__channel-logo-img"
-                    [src]="channel.logoUrl"
-                    [alt]="channel.name"
-                    loading="lazy"
-                  />
-                } @else {
-                  <span class="tv-dashboard__channel-logo">{{ channel.logoLabel }}</span>
-                }
-                <div class="tv-dashboard__channel-meta">
-                  <p class="tv-dashboard__channel-name">{{ channel.name }}</p>
-                  <p class="tv-dashboard__program-name">{{ channel.currentProgram.title }}</p>
-                  <div class="tv-dashboard__program-progress-track">
-                    <div
-                      class="tv-dashboard__program-progress-fill"
-                      [style.width.%]="channel.currentProgram.progressPercent"
-                    ></div>
-                  </div>
-                </div>
-              </li>
-            }
-          </ul>
-
-          @if (hasChannelOverflowDown()) {
-            <span class="tv-dashboard__overflow-indicator tv-dashboard__overflow-indicator--bottom">Mas abajo</span>
-          }
-        </div>
-      </section>
-
-        <section class="tv-dashboard__panel tv-dashboard__panel--epg" aria-label="Guia de programacion">
-          <header class="tv-dashboard__panel-header">
-            <h2 class="tv-dashboard__panel-title">Guia</h2>
-            @if (focusedChannel()) {
-              <span class="tv-dashboard__panel-hint tv-dashboard__panel-hint--channel">{{ focusedChannel().name }}</span>
-            }
-          </header>
-          <div class="tv-dashboard__list-container">
-            @if (focusedChannelGuide().length === 0) {
-              <p class="tv-dashboard__epg-guide-empty">Cargando guia...</p>
+        <ul #channelsList class="tv-dashboard__list" aria-label="Lista de canales">
+          @for (channel of visibleChannels(); track channel.id; let index = $index) {
+          <li class="tv-dashboard__channel-item"
+            [class.tv-dashboard__channel-item--focused]="isChannelFocused(channelWindowStart() + index)"
+            [class.tv-dashboard__channel-item--active]="currentChannel()?.id === channel.id">
+            @if (channel.logoUrl) {
+            <img class="tv-dashboard__channel-logo-img" [src]="channel.logoUrl" [alt]="channel.name" loading="lazy" />
             } @else {
-              <ul class="tv-dashboard__epg-guide-list">
-                @for (program of focusedChannelGuide(); track program.id) {
-                  <li
-                    class="tv-dashboard__epg-guide-item"
-                    [class.tv-dashboard__epg-guide-item--now-playing]="program.nowPlaying"
-                  >
-                    <p class="tv-dashboard__epg-guide-time">{{ formatEpgTime(program.startTimestamp) }}</p>
-                    <p class="tv-dashboard__epg-guide-title">{{ program.title }}</p>
-                  </li>
-                }
-              </ul>
+            <span class="tv-dashboard__channel-logo">{{ channel.logoLabel }}</span>
             }
-          </div>
-        </section>
-      }
-    </div>
+            <div class="tv-dashboard__channel-meta">
+              <p class="tv-dashboard__channel-name">{{ channel.name }}</p>
+              <p class="tv-dashboard__program-name">{{ channel.currentProgram.title }}</p>
+              <div class="tv-dashboard__program-progress-track">
+                <div class="tv-dashboard__program-progress-fill"
+                  [style.width.%]="channel.currentProgram.progressPercent"></div>
+              </div>
+            </div>
+          </li>
+          }
+        </ul>
+
+        @if (hasChannelOverflowDown()) {
+        <span class="tv-dashboard__overflow-indicator tv-dashboard__overflow-indicator--bottom">Mas abajo</span>
+        }
+      </div>
+    </section>
+    }
+
+    @if (activePanel() === 'search') {
+    <section class="tv-dashboard__panel tv-dashboard__panel--search" aria-label="Buscador">
+      <header class="tv-dashboard__panel-header">
+        <h2 class="tv-dashboard__panel-title">Buscar</h2>
+      </header>
+
+      <div class="tv-dashboard__search-input-container">
+        <input #searchInput type="text" class="tv-dashboard__search-input"
+          [class.tv-dashboard__search-input--focused]="isSearchInputFocused()" [value]="searchQuery()"
+          (input)="onSearchQueryChange($event)" placeholder="Escribe el nombre..." aria-label="Campo de búsqueda" />
+      </div>
+
+      <div class="tv-dashboard__list-container">
+        @if (searchResults().length === 0 && searchQuery().length > 0) {
+        <p class="tv-dashboard__search-empty">Sin resultados.</p>
+        } @else {
+        <ul class="tv-dashboard__list" aria-label="Lista de coincidencias">
+          @for (result of visibleSearchResults(); track result.channel.id; let index = $index) {
+          <li class="tv-dashboard__channel-item"
+            [class.tv-dashboard__channel-item--focused]="isSearchResultFocused(searchResultWindowStart() + index)">
+            @if (result.channel.logoUrl) {
+            <img class="tv-dashboard__channel-logo-img" [src]="result.channel.logoUrl" [alt]="result.channel.name"
+              loading="lazy" />
+            } @else {
+            <span class="tv-dashboard__channel-logo">{{ result.channel.logoLabel }}</span>
+            }
+            <div class="tv-dashboard__channel-meta">
+              <p class="tv-dashboard__channel-name">{{ result.channel.name }}</p>
+              <p class="tv-dashboard__program-name">{{ result.channel.currentProgram.title }}</p>
+              <div class="tv-dashboard__program-progress-track">
+                <div class="tv-dashboard__program-progress-fill"
+                  [style.width.%]="result.channel.currentProgram.progressPercent"></div>
+              </div>
+            </div>
+          </li>
+          }
+        </ul>
+        }
+      </div>
+    </section>
+    }
+
+    @if (activePanel() === 'channels' || activePanel() === 'search') {
+    <section class="tv-dashboard__panel tv-dashboard__panel--epg" aria-label="Guia de programacion">
+      <header class="tv-dashboard__panel-header">
+        <h2 class="tv-dashboard__panel-title">Guia</h2>
+        @if (focusedChannel()) {
+        <span class="tv-dashboard__panel-hint tv-dashboard__panel-hint--channel">{{ focusedChannel().name }}</span>
+        }
+      </header>
+      <div class="tv-dashboard__list-container">
+        @if (focusedChannelGuide().length === 0) {
+        <p class="tv-dashboard__epg-guide-empty">Cargando guia...</p>
+        } @else {
+        <ul class="tv-dashboard__epg-guide-list">
+          @for (program of focusedChannelGuide(); track program.id) {
+          <li class="tv-dashboard__epg-guide-item"
+            [class.tv-dashboard__epg-guide-item--now-playing]="program.nowPlaying">
+            <p class="tv-dashboard__epg-guide-time">{{ formatEpgTime(program.startTimestamp) }}</p>
+            <p class="tv-dashboard__epg-guide-title">{{ program.title }}</p>
+          </li>
+          }
+        </ul>
+        }
+      </div>
+    </section>
+    }
+  </div>
   }
 
   @if (infoBarVisible() && currentChannel()) {
-    <aside class="tv-dashboard__info-bar" aria-label="Informacion del canal actual">
-      @if (currentChannel()?.logoUrl) {
-        <img
-          class="tv-dashboard__info-logo-img"
-          [src]="currentChannel()?.logoUrl"
-          [alt]="currentChannel()?.name"
-          loading="lazy"
-        />
-      } @else {
-        <span class="tv-dashboard__info-logo">{{ currentChannel()?.logoLabel }}</span>
-      }
-      <div class="tv-dashboard__info-content">
-        <p class="tv-dashboard__info-channel">{{ currentChannel()?.name }}</p>
-        <p class="tv-dashboard__info-program">{{ currentChannel()?.currentProgram?.title }}</p>
-        <div class="tv-dashboard__program-progress-track">
-          <div
-            class="tv-dashboard__program-progress-fill"
-            [style.width.%]="currentChannel()?.currentProgram?.progressPercent ?? 0"
-          ></div>
-        </div>
+  <aside class="tv-dashboard__info-bar" aria-label="Informacion del canal actual">
+    @if (currentChannel()?.logoUrl) {
+    <img class="tv-dashboard__info-logo-img" [src]="currentChannel()?.logoUrl" [alt]="currentChannel()?.name"
+      loading="lazy" />
+    } @else {
+    <span class="tv-dashboard__info-logo">{{ currentChannel()?.logoLabel }}</span>
+    }
+    <div class="tv-dashboard__info-content">
+      <p class="tv-dashboard__info-channel">{{ currentChannel()?.name }}</p>
+      <p class="tv-dashboard__info-program">{{ currentChannel()?.currentProgram?.title }}</p>
+      <div class="tv-dashboard__program-progress-track">
+        <div class="tv-dashboard__program-progress-fill"
+          [style.width.%]="currentChannel()?.currentProgram?.progressPercent ?? 0"></div>
+      </div>
 
-        @if (currentChannelGuide().length > 0) {
-          <div class="tv-dashboard__epg-bar">
-            @for (program of currentChannelGuide(); track program.id) {
-              <div
-                class="tv-dashboard__epg-bar-item"
-                [class.tv-dashboard__epg-bar-item--now-playing]="program.nowPlaying"
-              >
-                <p class="tv-dashboard__epg-bar-time">
-                  {{ formatEpgTime(program.startTimestamp) }}
-                </p>
-                <p class="tv-dashboard__epg-bar-title">{{ program.title }}</p>
-              </div>
-            }
-          </div>
+      @if (currentChannelGuide().length > 0) {
+      <div class="tv-dashboard__epg-bar">
+        @for (program of currentChannelGuide(); track program.id) {
+        <div class="tv-dashboard__epg-bar-item" [class.tv-dashboard__epg-bar-item--now-playing]="program.nowPlaying">
+          <p class="tv-dashboard__epg-bar-time">
+            {{ formatEpgTime(program.startTimestamp) }}
+          </p>
+          <p class="tv-dashboard__epg-bar-title">{{ program.title }}</p>
+        </div>
         }
       </div>
-    </aside>
+      }
+    </div>
+  </aside>
   }
 
   @if (toastMessage()) {
-    <p class="tv-dashboard__toast" role="status">{{ toastMessage() }}</p>
+  <p class="tv-dashboard__toast" role="status">{{ toastMessage() }}</p>
   }
 
   @if (streamPlaybackError()) {
-    <p class="tv-dashboard__playback-error" role="alert">{{ streamPlaybackError() }}</p>
+  <p class="tv-dashboard__playback-error" role="alert">{{ streamPlaybackError() }}</p>
   }
 </section>
