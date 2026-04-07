@@ -1,5 +1,5 @@
 <section class="tv-dashboard" aria-label="Pantalla principal de TV">
-  <div class="tv-dashboard__video-layer" aria-label="Video en vivo">
+  <div class="tv-dashboard__video-layer" aria-label="Video en vivo" (click)="onVideoLayerClick()">
     <video #videoPlayer class="tv-dashboard__video-player" autoplay playsinline></video>
     <div class="tv-dashboard__video-glow"></div>
     @if (videoMetaVisible()) {
@@ -74,7 +74,7 @@
             <span class="tv-dashboard__overflow-indicator tv-dashboard__overflow-indicator--top">Mas arriba</span>
           }
 
-          <ul class="tv-dashboard__list" aria-label="Lista de canales">
+          <ul #channelsList class="tv-dashboard__list" aria-label="Lista de canales">
             @for (channel of visibleChannels(); track channel.id; let index = $index) {
               <li
                 class="tv-dashboard__channel-item"
@@ -110,6 +110,32 @@
           }
         </div>
       </section>
+
+        <section class="tv-dashboard__panel tv-dashboard__panel--epg" aria-label="Guia de programacion">
+          <header class="tv-dashboard__panel-header">
+            <h2 class="tv-dashboard__panel-title">Guia</h2>
+            @if (focusedChannel()) {
+              <span class="tv-dashboard__panel-hint tv-dashboard__panel-hint--channel">{{ focusedChannel().name }}</span>
+            }
+          </header>
+          <div class="tv-dashboard__list-container">
+            @if (focusedChannelGuide().length === 0) {
+              <p class="tv-dashboard__epg-guide-empty">Cargando guia...</p>
+            } @else {
+              <ul class="tv-dashboard__epg-guide-list">
+                @for (program of focusedChannelGuide(); track program.id) {
+                  <li
+                    class="tv-dashboard__epg-guide-item"
+                    [class.tv-dashboard__epg-guide-item--now-playing]="program.nowPlaying"
+                  >
+                    <p class="tv-dashboard__epg-guide-time">{{ formatEpgTime(program.startTimestamp) }}</p>
+                    <p class="tv-dashboard__epg-guide-title">{{ program.title }}</p>
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        </section>
       }
     </div>
   }
@@ -135,6 +161,22 @@
             [style.width.%]="currentChannel()?.currentProgram?.progressPercent ?? 0"
           ></div>
         </div>
+
+        @if (currentChannelGuide().length > 0) {
+          <div class="tv-dashboard__epg-bar">
+            @for (program of currentChannelGuide(); track program.id) {
+              <div
+                class="tv-dashboard__epg-bar-item"
+                [class.tv-dashboard__epg-bar-item--now-playing]="program.nowPlaying"
+              >
+                <p class="tv-dashboard__epg-bar-time">
+                  {{ formatEpgTime(program.startTimestamp) }}
+                </p>
+                <p class="tv-dashboard__epg-bar-title">{{ program.title }}</p>
+              </div>
+            }
+          </div>
+        }
       </div>
     </aside>
   }

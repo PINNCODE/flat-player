@@ -78,7 +78,8 @@
   z-index: 2;
   display: grid;
   gap: 1.1rem;
-  min-height: 100dvh;
+  height: 100dvh;
+  overflow: hidden;
   padding: 1.8rem;
   box-sizing: border-box;
   background: rgba(4, 11, 23, 0.34);
@@ -90,11 +91,11 @@
 }
 
 .tv-dashboard__overlay--categories {
-  grid-template-columns: 5.5rem minmax(17rem, 22rem);
+  grid-template-columns: 5.5rem minmax(14rem, 18rem);
 }
 
 .tv-dashboard__overlay--channels {
-  grid-template-columns: 5.5rem minmax(17rem, 22rem) minmax(22rem, 32rem);
+  grid-template-columns: 5.5rem minmax(14rem, 18rem) minmax(16rem, 22rem) minmax(18rem, 1fr);
 }
 
 .tv-dashboard__panel {
@@ -147,12 +148,15 @@
 }
 
 .tv-dashboard__panel--categories,
-.tv-dashboard__panel--channels {
+.tv-dashboard__panel--channels,
+.tv-dashboard__panel--epg {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  max-height: 100%;
   padding: 1rem 1rem 0.85rem;
   animation: panel-slide-in 200ms ease both;
+  overflow: hidden;
 }
 
 @keyframes panel-slide-in {
@@ -198,6 +202,8 @@
   overflow: auto;
   list-style: none;
   scrollbar-width: none;
+  scroll-behavior: smooth;
+  scroll-padding-block: 2rem; /* deja margen superior e inferior para visualidad */
 }
 
 .tv-dashboard__list::-webkit-scrollbar {
@@ -332,8 +338,73 @@
   pointer-events: none;
 }
 
-.tv-dashboard__overflow-indicator--top {
-  top: -0.65rem;
+.tv-dashboard__panel-hint--channel {
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tv-dashboard__epg-guide-list {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  list-style: none;
+  scrollbar-width: none;
+}
+
+.tv-dashboard__epg-guide-list::-webkit-scrollbar {
+  display: none;
+}
+
+.tv-dashboard__epg-guide-item {
+  display: grid;
+  grid-template-columns: 3.2rem minmax(0, 1fr);
+  gap: 0.55rem;
+  align-items: baseline;
+  padding: 0.55rem 0.5rem;
+  border-radius: 0.6rem;
+  margin-bottom: 0.3rem;
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(220, 240, 255, 0.75);
+}
+
+.tv-dashboard__epg-guide-item--now-playing {
+  background: rgba(0, 120, 255, 0.22);
+  border-left: 3px solid rgba(74, 200, 255, 0.95);
+  padding-left: calc(0.5rem - 3px);
+  color: #fff;
+}
+
+.tv-dashboard__epg-guide-time {
+  margin: 0;
+  font-size: 0.76rem;
+  font-variant-numeric: tabular-nums;
+  color: rgba(180, 218, 255, 0.72);
+}
+
+.tv-dashboard__epg-guide-item--now-playing .tv-dashboard__epg-guide-time {
+  color: #64d6ff;
+}
+
+.tv-dashboard__epg-guide-title {
+  margin: 0;
+  font-size: 0.86rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tv-dashboard__epg-guide-item--now-playing .tv-dashboard__epg-guide-title {
+  font-weight: 600;
+}
+
+.tv-dashboard__epg-guide-empty {
+  margin: 1rem 0 0;
+  font-size: 0.82rem;
+  color: rgba(190, 220, 255, 0.5);
+  text-align: center;
 }
 
 .tv-dashboard__overflow-indicator--bottom {
@@ -349,7 +420,7 @@
   display: grid;
   grid-template-columns: 5.3rem minmax(0, 1fr);
   gap: 0.8rem;
-  align-items: center;
+  align-items: start;
   padding: 0.8rem 1rem;
   border-radius: 0.95rem;
   border: 1px solid rgba(173, 226, 255, 0.42);
@@ -389,6 +460,64 @@
   margin: 0.18rem 0 0;
   font-size: 0.86rem;
   color: rgba(222, 241, 255, 0.84);
+}
+
+.tv-dashboard__epg-bar {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  scroll-behavior: smooth;
+}
+
+.tv-dashboard__epg-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.tv-dashboard__epg-bar-item {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 7rem;
+  max-width: 11rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 0.55rem;
+  border: 1px solid rgba(173, 226, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tv-dashboard__epg-bar-item--now-playing {
+  border-color: rgba(74, 200, 255, 0.7);
+  background: rgba(0, 120, 255, 0.25);
+
+  .tv-dashboard__epg-bar-time {
+    color: #64d6ff;
+  }
+
+  .tv-dashboard__epg-bar-title {
+    font-weight: 700;
+    color: #fff;
+  }
+}
+
+.tv-dashboard__epg-bar-time {
+  margin: 0;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  color: rgba(167, 208, 242, 0.72);
+}
+
+.tv-dashboard__epg-bar-title {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: rgba(207, 232, 255, 0.9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tv-dashboard__toast {

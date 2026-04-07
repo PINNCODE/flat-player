@@ -1,11 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, ViewChild, computed, inject, signal, viewChild } from '@angular/core';
 import { ChangeChannelUseCase } from '@core/application/usecases/change-channel.usecase';
 import { GetTvCatalogUseCase } from '@core/application/usecases/get-tv-catalog.usecase';
 import { LogoutUseCase } from '@core/application/usecases/logout.usecase';
 import { ResolveStreamUrlUseCase } from '@core/application/usecases/resolve-stream-url.usecase';
 import { TrackPlaybackErrorUseCase } from '@core/application/usecases/track-playback-error.usecase';
+import { GetChannelEpgUseCase } from '@core/application/usecases/get-channel-epg.usecase';
 import { TvCategory, TvChannel } from '@core/domain/models/tv-catalog.model';
+import { EpgListing } from '@core/domain/models/epg-listing.model';
 import { Router } from '@angular/router';
 import { VideoPlaybackFacade } from '../../services/video-playback.facade';
 import { environment } from '../../../../environments/environment';
@@ -48,6 +50,12 @@ export class Dashboard implements AfterViewInit {
   protected readonly selectedCategoryIndex = signal(0);
   protected readonly selectedChannelIndex = signal(0);
   protected readonly currentChannel = signal<TvChannel | null>(null);
+  protected readonly currentChannelGuide = signal<readonly EpgListing[]>([]);
+  protected readonly focusedChannelGuide = signal<readonly EpgListing[]>([]);
+
+  protected readonly focusedChannel = computed(
+    () => this.focusedChannels()[this.focusedChannelIndex()] ?? null,
+  );
 
   protected readonly infoBarVisible = signal(false);
   protected readonly videoMetaVisible = signal(false);
@@ -97,12 +105,14 @@ export class Dashboard implements AfterViewInit {
   );
 
   private readonly videoPlayerRef = viewChild<ElementRef<HTMLVideoElement>>('videoPlayer');
+  @ViewChild('channelsList') channelsList?: ElementRef<HTMLUListElement>;
 
   private readonly getTvCatalogUseCase = inject(GetTvCatalogUseCase);
   private readonly changeChannelUseCase = inject(ChangeChannelUseCase);
   private readonly logoutUseCase = inject(LogoutUseCase);
   private readonly resolveStreamUrlUseCase = inject(ResolveStreamUrlUseCase);
   private readonly trackPlaybackErrorUseCase = inject(TrackPlaybackErrorUseCase);
+  private readonly getChannelEpgUseCase = inject(GetChannelEpgUseCase);
   private readonly videoPlaybackFacade = inject(VideoPlaybackFacade);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -218,7 +228,12 @@ export class Dashboard implements AfterViewInit {
       return;
     }
 
-    this.openOverlay(action === 'ok' ? 'ok' : 'dpad');
+    if (action === 'ok') {
+      this.toggleInfoBar();
+      return;
+    }
+
+    this.openOverlay('dpad');
   }
 
   private handleOverlayAction(action: 'up' | 'down' | 'left' | 'right' | 'ok'): void {
@@ -293,17 +308,20 @@ export class Dashboard implements AfterViewInit {
     if (action === 'right' || action === 'ok') {
       this.activePanel.set('channels');
       this.focusedChannelIndex.set(0);
+      this.loadFocusedChannelEpg();
     }
   }
 
   private handleChannelNavigation(action: 'up' | 'down' | 'left' | 'right' | 'ok'): void {
     if (action === 'up') {
       this.moveChannelFocus(-1);
+      this.scrollChannelIntoView();
       return;
     }
 
     if (action === 'down') {
       this.moveChannelFocus(1);
+      this.scrollChannelIntoView();
       return;
     }
 
@@ -363,6 +381,24 @@ export class Dashboard implements AfterViewInit {
     this.focusedChannelIndex.update(
       (current) => ((current + delta) % channelCount + channelCount) % channelCount,
     );
+    this.loadFocusedChannelEpg();
+  }
+
+  private scrollChannelIntoView(): void {
+    if (!this.channelsList?.nativeElement) {
+      return;
+    }
+
+    const listElement = this.channelsList.nativeElement;
+    const visibleIndex = this.focusedChannelIndex() - this.channelWindowStart();
+
+    if (visibleIndex >= 0 && visibleIndex < listElement.children.length) {
+      const activeItem = listElement.children[visibleIndex] as HTMLElement | undefined;
+
+      if (activeItem) {
+        activeItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
   }
 
   private openOverlay(trigger: OverlayTrigger): void {
@@ -397,6 +433,53 @@ export class Dashboard implements AfterViewInit {
     this.currentChannel.set(channel);
     this.showVideoMeta();
     this.startPlayback(channel);
+    void this.loadChannelEpg(channel);
+  }
+
+  private loadFocusedChannelEpg(): void {
+    const channel = this.focusedChannel();
+
+    if (!channel) {
+      return;
+    }
+
+    this.focusedChannelGuide.set([]);
+    void this.getChannelEpgUseCase.execute(channel.streamId)
+      .then((listings) => this.focusedChannelGuide.set(listings))
+      .catch(() => this.focusedChannelGuide.set([]));
+  }
+
+  private async loadChannelEpg(channel: TvChannel): Promise<void> {
+    try {
+      const epgListings = await this.getChannelEpgUseCase.execute(channel.streamId);
+      this.currentChannelGuide.set(epgListings);
+    } catch {
+      this.currentChannelGuide.set([]);
+    }
+  }
+
+  formatEpgTime(timestamp: number | string): string {
+    const unix = typeof timestamp === 'string' ? parseInt(timestamp, 10) : timestamp;
+    if (isNaN(unix)) return '00:00';
+    const date = new Date(unix * 1000);
+    return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  protected onVideoLayerClick(): void {
+    if (this.overlayVisible()) {
+      return;
+    }
+
+    this.toggleInfoBar();
+  }
+
+  private toggleInfoBar(): void {
+    if (this.infoBarVisible()) {
+      this.clearInfoBarTimeout();
+      this.infoBarVisible.set(false);
+    } else {
+      this.showInfoBar();
+    }
   }
 
   private showInfoBar(): void {

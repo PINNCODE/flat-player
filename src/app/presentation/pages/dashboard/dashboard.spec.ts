@@ -4,7 +4,9 @@ import { Router } from '@angular/router';
 import { LogoutUseCase } from '@core/application/usecases/logout.usecase';
 import { ResolveStreamUrlUseCase } from '@core/application/usecases/resolve-stream-url.usecase';
 import { TrackPlaybackErrorUseCase } from '@core/application/usecases/track-playback-error.usecase';
+import { GetChannelEpgUseCase } from '@core/application/usecases/get-channel-epg.usecase';
 import { TV_CATALOG_REPOSITORY } from '@core/domain/ports/tv-catalog.repository';
+import { EPG_REPOSITORY } from '@core/domain/ports/epg.repository';
 import { TvCatalogMockAdapter } from '@infrastructure/adapters/mock/tv-catalog-mock.adapter';
 import { Dashboard } from './dashboard';
 import { VideoPlaybackFacade } from '../../services/video-playback.facade';
@@ -27,6 +29,10 @@ interface TrackPlaybackErrorUseCaseMock {
   execute: ReturnType<typeof vi.fn>;
 }
 
+interface GetChannelEpgUseCaseMock {
+  execute: ReturnType<typeof vi.fn>;
+}
+
 describe('Dashboard', () => {
   let component: Dashboard;
   let fixture: ComponentFixture<Dashboard>;
@@ -34,6 +40,7 @@ describe('Dashboard', () => {
   let resolveStreamUrlUseCaseMock: ResolveStreamUrlUseCaseMock;
   let videoPlaybackFacadeMock: VideoPlaybackFacadeMock;
   let trackPlaybackErrorUseCaseMock: TrackPlaybackErrorUseCaseMock;
+  let getChannelEpgUseCaseMock: GetChannelEpgUseCaseMock;
   let router: Router;
 
   beforeEach(async () => {
@@ -57,6 +64,10 @@ describe('Dashboard', () => {
       execute: vi.fn(),
     };
 
+    getChannelEpgUseCaseMock = {
+      execute: vi.fn(() => Promise.resolve([])),
+    };
+
     await TestBed.configureTestingModule({
       imports: [Dashboard],
       providers: [
@@ -65,7 +76,9 @@ describe('Dashboard', () => {
         { provide: LogoutUseCase, useValue: logoutUseCaseMock },
         { provide: ResolveStreamUrlUseCase, useValue: resolveStreamUrlUseCaseMock },
         { provide: TrackPlaybackErrorUseCase, useValue: trackPlaybackErrorUseCaseMock },
+        { provide: GetChannelEpgUseCase, useValue: getChannelEpgUseCaseMock },
         { provide: VideoPlaybackFacade, useValue: videoPlaybackFacadeMock },
+        { provide: EPG_REPOSITORY, useValue: { getChannelGuide: vi.fn(() => Promise.resolve([])) } },
       ],
     }).compileComponents();
 

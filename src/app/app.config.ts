@@ -8,6 +8,7 @@ import { httpLoaderInterceptor } from '@infrastructure/interceptors/http-loader.
 import { authSessionProvider } from '@infrastructure/providers/auth-session.provider';
 import { playbackTelemetryProvider } from '@infrastructure/providers/playback-telemetry.provider';
 import { tvCatalogProvider } from '@infrastructure/providers/tv-catalog.provider';
+import { epgProvider } from '@infrastructure/providers/epg.provider';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -18,5 +19,6 @@ export const appConfig: ApplicationConfig = {
     authSessionProvider,
     playbackTelemetryProvider,
     tvCatalogProvider,
+    epgProvider,
   ],
 };
