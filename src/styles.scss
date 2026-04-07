@@ -1,9 +1,17 @@
+:root {
+	// Base tipografica adaptada a Smart TV (720p a 4K)
+	font-size: clamp(14px, 0.85vw + 0.45vh, 21px);
+}
+
 html,
 body {
 	min-height: 100%;
+	width: 100%;
 	margin: 0;
 }
 
 body {
 	font-family: 'Segoe UI', sans-serif;
+	line-height: 1.4;
+	background: #02070f;
 }

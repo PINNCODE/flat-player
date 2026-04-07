@@ -1,7 +1,7 @@
-// ── orbes decorativos ─────────────────────────────────────────
-$orb-cyan:  #00d2ff;
-$orb-blue:  #007acc;
-$orb-deep:  #0b1220;
+// Decorative orbs
+$orb-cyan: #00d2ff;
+$orb-blue: #007acc;
+$orb-deep: #0b1220;
 
 .login-page {
     position: relative;
@@ -9,11 +9,10 @@ $orb-deep:  #0b1220;
     display: grid;
     place-items: center;
     height: 100vh;
-    padding: 2rem;
-    overflow: hidden;
+    padding: clamp(1.4rem, 2.7vh, 2.8rem);
+    overflow: auto;
     background: linear-gradient(135deg, #060d1a 0%, #0d2137 55%, #0f3460 100%);
 
-    // Orbe superior izquierdo
     &::before {
         content: '';
         position: absolute;
@@ -27,7 +26,6 @@ $orb-deep:  #0b1220;
         pointer-events: none;
     }
 
-    // Orbe inferior derecho
     &::after {
         content: '';
         position: absolute;
@@ -46,32 +44,33 @@ $orb-deep:  #0b1220;
     position: relative;
     z-index: 1;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(20rem, 26rem);
+    grid-template-columns: minmax(24rem, 1fr) minmax(23rem, 33rem);
     grid-template-areas:
         'welcome form'
         'remote form';
-    align-items: start;
-    gap: 2rem;
-    width: min(100%, 72rem);
+    align-items: stretch;
+    gap: clamp(1rem, 2vw, 2.2rem);
+    width: min(96vw, 88rem);
+    margin: auto;
 }
 
 .login-page__welcome {
     grid-area: welcome;
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.95rem;
     padding: 0 1.5rem 0 0;
     text-align: left;
-    max-width: 34rem;
+    max-width: 40rem;
 }
 
 .login-page__remote-help {
     grid-area: remote;
     justify-self: stretch;
-    width: 80%;
+    width: 100%;
     box-sizing: border-box;
     overflow: hidden;
-    padding: 0.65rem 0.7rem;
+    padding: clamp(0.75rem, 1.5vh, 1.15rem);
     border-radius: 1rem;
     background: rgba(255, 255, 255, 0.07);
     border: 1px solid rgba(255, 255, 255, 0.14);
@@ -84,7 +83,7 @@ $orb-deep:  #0b1220;
 
 .login-page__remote-help-title {
     margin: 0 0 0.45rem;
-    font-size: 0.68rem;
+    font-size: clamp(0.74rem, 0.66rem + 0.2vw, 0.95rem);
     font-weight: 700;
     letter-spacing: 0.07em;
     text-transform: uppercase;
@@ -94,17 +93,17 @@ $orb-deep:  #0b1220;
 .login-page__remote-row {
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: 0.5rem;
 }
 
 .login-page__remote-item {
     display: flex;
     align-items: center;
-    gap: 0.32rem;
+    gap: 0.45rem;
     min-width: 0;
     width: 100%;
-    min-height: 1.75rem;
-    padding: 0.26rem 0.35rem;
+    min-height: 2.15rem;
+    padding: 0.35rem 0.45rem;
     border-radius: 0.48rem;
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(154, 210, 255, 0.16);
@@ -112,8 +111,8 @@ $orb-deep:  #0b1220;
 }
 
 .login-page__remote-key {
-    flex: 0 0 1.4rem;
-    height: 1.4rem;
+    flex: 0 0 1.8rem;
+    height: 1.8rem;
     display: grid;
     place-items: center;
     border-radius: 0.4rem;
@@ -124,31 +123,30 @@ $orb-deep:  #0b1220;
 }
 
 .login-page__remote-key svg {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
 }
 
 .login-page__remote-key--ok {
-    font-size: 0.58rem;
+    font-size: 0.72rem;
     font-weight: 800;
     letter-spacing: 0.03em;
 }
 
 .login-page__remote-text {
-    font-size: 0.65rem;
-    line-height: 1.1;
+    font-size: clamp(0.78rem, 0.72rem + 0.18vw, 0.98rem);
+    line-height: 1.25;
     white-space: normal;
     overflow-wrap: anywhere;
     color: rgba(225, 242, 255, 0.85);
 }
 
-// ── tarjeta glass ──────────────────────────────────────────────
 .login-page__form {
     grid-area: form;
     justify-self: end;
     width: 100%;
-    max-width: 26rem;
-    padding: 2.5rem 2rem;
+    max-width: 33rem;
+    padding: clamp(1.8rem, 3vh, 2.7rem) clamp(1.4rem, 2.2vw, 2.2rem);
     border-radius: 1.25rem;
     background: rgba(255, 255, 255, 0.07);
     border: 1px solid rgba(255, 255, 255, 0.15);
@@ -159,20 +157,18 @@ $orb-deep:  #0b1220;
     -webkit-backdrop-filter: blur(20px);
 }
 
-// ── título ─────────────────────────────────────────────────────
 .login-page__title {
     margin: 0 0 0.375rem;
     text-align: left;
-    font-size: 1.75rem;
+    font-size: clamp(1.8rem, 1.45rem + 0.8vw, 2.35rem);
     font-weight: 700;
     letter-spacing: -0.02em;
     color: #ffffff;
 }
 
-// ── copy de bienvenida ─────────────────────────────────────────
 .login-page__welcome-title {
     margin: 0;
-    font-size: 1.5rem;
+    font-size: clamp(1.65rem, 1.25rem + 0.8vw, 2.2rem);
     font-weight: 700;
     letter-spacing: -0.02em;
     color: #ffffff;
@@ -180,56 +176,52 @@ $orb-deep:  #0b1220;
 
 .login-page__welcome-text {
     margin: 0;
-    font-size: 1rem;
-    line-height: 1.65;
+    font-size: clamp(1rem, 0.9rem + 0.3vw, 1.25rem);
+    line-height: 1.55;
     color: rgba(255, 255, 255, 0.76);
 }
 
-// ── form layout ────────────────────────────────────────────────
 .login-page__form-content {
     display: flex;
     flex-direction: column;
-    gap: 1.125rem;
+    gap: 1.25rem;
 }
 
 .login-page__form-group {
     display: flex;
     flex-direction: column;
-    gap: 0.375rem;
+    gap: 0.5rem;
 }
 
 .login-page__form-error {
     margin: 0;
-    font-size: 0.8125rem;
+    font-size: 0.95rem;
     color: #ffb4b4;
 }
 
-// ── labels ─────────────────────────────────────────────────────
 .login-page__form-label {
-    font-size: 0.8125rem;
+    font-size: 0.9rem;
     font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: rgba(255, 255, 255, 0.55);
 }
 
-// ── animación glow para inputs ────────────────────────────────
 @keyframes input-glow {
-    0%   { box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.25), 0 0 10px rgba(0, 210, 255, 0.15); }
-    50%  { box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.5),  0 0 22px rgba(0, 210, 255, 0.38); }
+    0% { box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.25), 0 0 10px rgba(0, 210, 255, 0.15); }
+    50% { box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.5), 0 0 22px rgba(0, 210, 255, 0.38); }
     100% { box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.25), 0 0 10px rgba(0, 210, 255, 0.15); }
 }
 
-// ── inputs ─────────────────────────────────────────────────────
 .login-page__form-input {
     width: 100%;
-    padding: 0.75rem 1rem;
+    padding: 0.95rem 1.1rem;
     border-radius: 0.75rem;
     border: 1px solid rgba(255, 255, 255, 0.14);
     background: rgba(255, 255, 255, 0.06);
     color: #ffffff;
     font: inherit;
-    font-size: 0.9375rem;
+    font-size: 1rem;
     box-sizing: border-box;
     transition:
         border-color 160ms ease,
@@ -247,17 +239,16 @@ $orb-deep:  #0b1220;
     }
 }
 
-// ── botón ──────────────────────────────────────────────────────
 .login-page__form-button {
     margin-top: 0.5rem;
     width: 100%;
-    padding: 0.9rem 1rem;
+    padding: 1rem;
     border: 0;
     border-radius: 0.75rem;
     background: linear-gradient(135deg, #007acc 0%, #005fa3 100%);
     color: #ffffff;
     font: inherit;
-    font-size: 0.9375rem;
+    font-size: 1rem;
     font-weight: 700;
     letter-spacing: 0.03em;
     cursor: pointer;
@@ -293,12 +284,38 @@ $orb-deep:  #0b1220;
 
 .login-page__form-feedback {
     margin: 0;
-    font-size: 0.875rem;
+    font-size: 1rem;
     line-height: 1.5;
 }
 
 .login-page__form-feedback--error {
     color: #ffb4b4;
+}
+
+@media (max-width: 1200px) {
+    .login-page__layout {
+        grid-template-columns: minmax(0, 1fr) minmax(21rem, 27rem);
+        width: min(98vw, 76rem);
+    }
+
+    .login-page__welcome {
+        max-width: 34rem;
+    }
+}
+
+@media (max-height: 760px) {
+    .login-page {
+        padding: 1rem;
+    }
+
+    .login-page__layout {
+        gap: 0.85rem;
+    }
+
+    .login-page__remote-row {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
 }
 
 @media (max-width: 640px) {
