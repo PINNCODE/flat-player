@@ -46,8 +46,7 @@ $orb-deep: #0b1220;
     display: grid;
     grid-template-columns: minmax(24rem, 1fr) minmax(23rem, 33rem);
     grid-template-areas:
-        'welcome form'
-        'remote form';
+        'welcome form';
     align-items: stretch;
     gap: clamp(1rem, 2vw, 2.2rem);
     width: min(96vw, 88rem);
@@ -59,86 +58,9 @@ $orb-deep: #0b1220;
     display: flex;
     flex-direction: column;
     gap: 0.95rem;
-    padding: 0 1.5rem 0 0;
+    padding: 0;
     text-align: left;
     max-width: 40rem;
-}
-
-.login-page__remote-help {
-    grid-area: remote;
-    justify-self: stretch;
-    width: 100%;
-    box-sizing: border-box;
-    overflow: hidden;
-    padding: clamp(0.75rem, 1.5vh, 1.15rem);
-    border-radius: 1rem;
-    background: rgba(255, 255, 255, 0.07);
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    box-shadow:
-        0 8px 26px rgba(0, 0, 0, 0.35),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-}
-
-.login-page__remote-help-title {
-    margin: 0 0 0.45rem;
-    font-size: clamp(0.74rem, 0.66rem + 0.2vw, 0.95rem);
-    font-weight: 700;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
-    color: rgba(205, 234, 255, 0.92);
-}
-
-.login-page__remote-row {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.login-page__remote-item {
-    display: flex;
-    align-items: center;
-    gap: 0.45rem;
-    min-width: 0;
-    width: 100%;
-    min-height: 2.15rem;
-    padding: 0.35rem 0.45rem;
-    border-radius: 0.48rem;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(154, 210, 255, 0.16);
-    box-sizing: border-box;
-}
-
-.login-page__remote-key {
-    flex: 0 0 1.8rem;
-    height: 1.8rem;
-    display: grid;
-    place-items: center;
-    border-radius: 0.4rem;
-    color: #dff4ff;
-    background: linear-gradient(145deg, rgba(0, 122, 204, 0.46), rgba(0, 210, 255, 0.22));
-    border: 1px solid rgba(139, 219, 255, 0.6);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24);
-}
-
-.login-page__remote-key svg {
-    width: 14px;
-    height: 14px;
-}
-
-.login-page__remote-key--ok {
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 0.03em;
-}
-
-.login-page__remote-text {
-    font-size: clamp(0.78rem, 0.72rem + 0.18vw, 0.98rem);
-    line-height: 1.25;
-    white-space: normal;
-    overflow-wrap: anywhere;
-    color: rgba(225, 242, 255, 0.85);
 }
 
 .login-page__form {
@@ -311,11 +233,6 @@ $orb-deep: #0b1220;
     .login-page__layout {
         gap: 0.85rem;
     }
-
-    .login-page__remote-row {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
 }
 
 @media (max-width: 640px) {
@@ -327,8 +244,7 @@ $orb-deep: #0b1220;
         grid-template-columns: minmax(0, 1fr);
         grid-template-areas:
             'welcome'
-            'form'
-            'remote';
+            'form';
         gap: 1.25rem;
         width: min(100%, 28rem);
     }
@@ -337,10 +253,6 @@ $orb-deep: #0b1220;
         padding: 0;
         text-align: center;
         max-width: none;
-    }
-
-    .login-page__remote-help {
-        justify-self: stretch;
     }
 
     .login-page__form {
