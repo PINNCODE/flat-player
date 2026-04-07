@@ -8,7 +8,8 @@
     "build:gh-pages": "ng build --configuration production --base-href /flat-player/ && cp dist/flat-player/browser/index.html dist/flat-player/browser/404.html && touch dist/flat-player/browser/.nojekyll",
     "deploy:gh-pages": "npm run build:gh-pages && npx angular-cli-ghpages --dir=dist/flat-player/browser",
     "copy:wrapper": "rsync -a --delete --exclude '.project' --exclude '.settings/' --exclude '.tproject' --exclude 'config.xml' --exclude 'icon.png' dist/flat-player/browser/ ../flatPlayerWrapper/",
-    "build:wrapper": "npm run build && npm run copy:wrapper",
+    "build:tizen": "ng build --configuration production && node scripts/build-tizen.mjs",
+    "build:wrapper": "npm run build:tizen && npm run copy:wrapper",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
@@ -33,6 +34,7 @@
     "@angular/cli": "^21.2.6",
     "@angular/compiler-cli": "^21.2.0",
     "angular-cli-ghpages": "^3.0.2",
+    "esbuild": "^0.25.9",
     "jsdom": "^28.0.0",
     "prettier": "^3.8.1",
     "typescript": "~5.9.2",
