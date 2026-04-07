@@ -2,13 +2,20 @@ import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
+  HostListener,
   inject,
   signal,
+  viewChild,
 } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Credentials } from '@core/domain/models/credentials.model';
 import { LoginUseCase } from '@core/application/usecases/login.usecase';
+
+type LoginFocusIndex = 0 | 1 | 2 | 3; // 0=host, 1=username, 2=password, 3=button
+
+const FOCUSABLE_COUNT = 4;
 
 @Component({
   selector: 'app-login',
@@ -20,6 +27,13 @@ import { LoginUseCase } from '@core/application/usecases/login.usecase';
 export class Login {
   protected readonly isSubmitting = signal(false);
   protected readonly submitError = signal('');
+  protected readonly focusedIndex = signal<LoginFocusIndex>(0);
+  protected readonly isEditing = signal(false);
+
+  private readonly hostInputRef = viewChild<ElementRef<HTMLInputElement>>('hostInput');
+  private readonly usernameInputRef = viewChild<ElementRef<HTMLInputElement>>('usernameInput');
+  private readonly passwordInputRef = viewChild<ElementRef<HTMLInputElement>>('passwordInput');
+  private readonly submitButtonRef = viewChild<ElementRef<HTMLButtonElement>>('submitButton');
 
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly loginUseCase = inject(LoginUseCase);
@@ -29,6 +43,60 @@ export class Login {
     username: ['', [Validators.required]],
     password: ['', [Validators.required]],
   });
+
+  @HostListener('window:keydown', ['$event'])
+  protected onRemoteKeydown(event: KeyboardEvent): void {
+    if (this.isEditing()) {
+      if (event.key === 'XF86Back' || event.key === 'Escape') {
+        event.preventDefault();
+        this.deactivateInput();
+      }
+      // All other keys pass through to the active input (virtual keyboard typing)
+      return;
+    }
+
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        this.moveFocus(1);
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        this.moveFocus(-1);
+        break;
+      case 'Enter':
+      case 'NumpadEnter':
+      case 'OK':
+        event.preventDefault();
+        this.activateFocused();
+        break;
+    }
+  }
+
+  private moveFocus(direction: 1 | -1): void {
+    const next = ((this.focusedIndex() + direction + FOCUSABLE_COUNT) % FOCUSABLE_COUNT) as LoginFocusIndex;
+    this.focusedIndex.set(next);
+  }
+
+  private activateFocused(): void {
+    const index = this.focusedIndex();
+    if (index === 3) {
+      this.onSubmit();
+      return;
+    }
+    this.isEditing.set(true);
+    this.getInputRefAt(index)?.nativeElement.focus();
+  }
+
+  private deactivateInput(): void {
+    this.isEditing.set(false);
+    this.getInputRefAt(this.focusedIndex())?.nativeElement.blur();
+  }
+
+  private getInputRefAt(index: LoginFocusIndex): ElementRef<HTMLInputElement> | undefined {
+    const refs = [this.hostInputRef(), this.usernameInputRef(), this.passwordInputRef()];
+    return refs[index];
+  }
 
   protected async onSubmit(): Promise<void> {
     if (this.loginForm.invalid) {

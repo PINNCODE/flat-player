@@ -9,6 +9,7 @@ import { authSessionProvider } from '@infrastructure/providers/auth-session.prov
 import { playbackTelemetryProvider } from '@infrastructure/providers/playback-telemetry.provider';
 import { tvCatalogProvider } from '@infrastructure/providers/tv-catalog.provider';
 import { epgProvider } from '@infrastructure/providers/epg.provider';
+import { tizenRemoteKeysProvider } from '@infrastructure/providers/tizen-remote-keys.provider';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -20,5 +21,6 @@ export const appConfig: ApplicationConfig = {
     playbackTelemetryProvider,
     tvCatalogProvider,
     epgProvider,
+    tizenRemoteKeysProvider,
   ],
 };

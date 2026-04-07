@@ -264,3 +264,37 @@ $orb-deep: #0b1220;
         text-align: center;
     }
 }
+
+// ── TV Remote navigation states ──────────────────────────────────────────────
+
+// "Cursor is hovering this field" — subtle highlight visible on a dark TV screen
+.login-page__form-group--nav-focused {
+    .login-page__form-label {
+        color: rgba(0, 210, 255, 0.85);
+    }
+
+    .login-page__form-input {
+        border-color: rgba(0, 210, 255, 0.55);
+        background: rgba(0, 210, 255, 0.06);
+    }
+}
+
+// "User pressed OK — input is active and receiving text from the virtual keyboard"
+.login-page__form-input--editing {
+    border-color: rgba(0, 210, 255, 0.9) !important;
+    background: rgba(0, 210, 255, 0.1) !important;
+    box-shadow:
+        0 0 0 2px rgba(0, 122, 204, 0.45),
+        0 0 18px rgba(0, 210, 255, 0.4),
+        0 0 40px rgba(0, 210, 255, 0.15);
+    animation: input-glow 2s ease-in-out infinite;
+}
+
+// "Cursor is on the button"
+.login-page__form-button--nav-focused {
+    background: linear-gradient(135deg, #0088e0 0%, #006bb8 100%);
+    box-shadow:
+        0 0 0 2px rgba(0, 210, 255, 0.6),
+        0 6px 28px rgba(0, 122, 204, 0.65);
+    transform: translateY(-1px);
+}

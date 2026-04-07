@@ -149,12 +149,23 @@ export class Dashboard implements AfterViewInit {
 
     event.preventDefault();
 
+    if (action === 'back') {
+      this.handleBackAction();
+      return;
+    }
+
     if (!this.overlayVisible()) {
       this.handleVideoOnlyAction(action);
       return;
     }
 
     this.handleOverlayAction(action);
+  }
+
+  private handleBackAction(): void {
+    if (!this.overlayVisible()) return;
+    this.overlayVisible.set(false);
+    this.activePanel.set('menu');
   }
 
   protected isMenuFocused(index: number): boolean {
@@ -202,7 +213,7 @@ export class Dashboard implements AfterViewInit {
     }
   }
 
-  private resolveRemoteAction(key: string): 'up' | 'down' | 'left' | 'right' | 'ok' | null {
+  private resolveRemoteAction(key: string): 'up' | 'down' | 'left' | 'right' | 'ok' | 'back' | null {
     switch (key) {
       case 'ArrowUp':
         return 'up';
@@ -216,6 +227,9 @@ export class Dashboard implements AfterViewInit {
       case 'NumpadEnter':
       case 'OK':
         return 'ok';
+      case 'XF86Back':
+      case 'Escape':
+        return 'back';
       default:
         return null;
     }

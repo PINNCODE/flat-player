@@ -13,13 +13,16 @@
         <section class="login-page__form" aria-label="Login form">
             <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-page__form-content">
                 <h1 class="login-page__title">Login</h1>
-                <div class="login-page__form-group">
+                <div class="login-page__form-group"
+                     [class.login-page__form-group--nav-focused]="focusedIndex() === 0 && !isEditing()">
                     <label for="host" class="login-page__form-label">Host</label>
                     <input
+                        #hostInput
                         type="url"
                         id="host"
                         formControlName="host"
                         class="login-page__form-input"
+                        [class.login-page__form-input--editing]="focusedIndex() === 0 && isEditing()"
                         placeholder="https://example.com"
                         autocomplete="url"
                         [attr.aria-invalid]="hasControlError('host')"
@@ -29,13 +32,16 @@
                         <p class="login-page__form-error">{{ getControlErrorMessage('host') }}</p>
                     }
                 </div>
-                <div class="login-page__form-group">
+                <div class="login-page__form-group"
+                     [class.login-page__form-group--nav-focused]="focusedIndex() === 1 && !isEditing()">
                     <label for="username" class="login-page__form-label">Username</label>
                     <input
+                        #usernameInput
                         type="text"
                         id="username"
                         formControlName="username"
                         class="login-page__form-input"
+                        [class.login-page__form-input--editing]="focusedIndex() === 1 && isEditing()"
                         autocomplete="username"
                         [attr.aria-invalid]="hasControlError('username')"
                         required
@@ -44,13 +50,16 @@
                         <p class="login-page__form-error">{{ getControlErrorMessage('username') }}</p>
                     }
                 </div>
-                <div class="login-page__form-group">
+                <div class="login-page__form-group"
+                     [class.login-page__form-group--nav-focused]="focusedIndex() === 2 && !isEditing()">
                     <label for="password" class="login-page__form-label">Password</label>
                     <input
+                        #passwordInput
                         type="password"
                         id="password"
                         formControlName="password"
                         class="login-page__form-input"
+                        [class.login-page__form-input--editing]="focusedIndex() === 2 && isEditing()"
                         autocomplete="current-password"
                         [attr.aria-invalid]="hasControlError('password')"
                         required
@@ -60,8 +69,10 @@
                     }
                 </div>
                 <button
+                    #submitButton
                     type="submit"
                     class="login-page__form-button"
+                    [class.login-page__form-button--nav-focused]="focusedIndex() === 3"
                     [disabled]="isSubmitting()"
                 >
                     {{ isSubmitting() ? 'Loading...' : 'Login' }}
