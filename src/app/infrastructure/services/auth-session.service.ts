@@ -5,6 +5,8 @@ import { AuthSessionPort } from '@core/domain/ports/auth-session.port';
 @Injectable({ providedIn: 'root' })
 export class AuthSessionService implements AuthSessionPort {
   private readonly storageKey = 'flat-player-auth-session';
+  private readonly legacyStorage = globalThis.localStorage;
+  private readonly sessionStorageRef = globalThis.sessionStorage;
   private credentials: Credentials | null = null;
 
   store(credentials: Credentials): void {
@@ -25,7 +27,8 @@ export class AuthSessionService implements AuthSessionPort {
     this.credentials = null;
 
     try {
-      localStorage.removeItem(this.storageKey);
+      this.sessionStorageRef.removeItem(this.storageKey);
+      this.legacyStorage.removeItem(this.storageKey);
     } catch {
       // Ignore storage cleanup failures to keep logout flow resilient.
     }
@@ -33,7 +36,7 @@ export class AuthSessionService implements AuthSessionPort {
 
   private persist(credentials: Credentials): void {
     try {
-      localStorage.setItem(
+      this.sessionStorageRef.setItem(
         this.storageKey,
         JSON.stringify({
           host: credentials.host,
@@ -48,7 +51,8 @@ export class AuthSessionService implements AuthSessionPort {
 
   private restore(): Credentials | null {
     try {
-      const rawSession = localStorage.getItem(this.storageKey);
+      const rawSession = this.sessionStorageRef.getItem(this.storageKey)
+        ?? this.restoreLegacySession();
 
       if (!rawSession) {
         return null;
@@ -61,14 +65,26 @@ export class AuthSessionService implements AuthSessionPort {
       };
 
       if (!parsed.user || !parsed.password || !parsed.host) {
-        localStorage.removeItem(this.storageKey);
+        this.clear();
         return null;
       }
 
       return new Credentials(parsed.user, parsed.password, parsed.host);
     } catch {
-      localStorage.removeItem(this.storageKey);
+      this.clear();
       return null;
     }
+  }
+
+  private restoreLegacySession(): string | null {
+    const rawLegacySession = this.legacyStorage.getItem(this.storageKey);
+
+    if (!rawLegacySession) {
+      return null;
+    }
+
+    this.sessionStorageRef.setItem(this.storageKey, rawLegacySession);
+    this.legacyStorage.removeItem(this.storageKey);
+    return rawLegacySession;
   }
 }
