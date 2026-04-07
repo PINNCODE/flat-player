@@ -1,1 +1,0 @@
-var e={preferredStreamFormat:"m3u8",streamProxy:{enabled:!1,basePath:"/iptv"},autoLogin:{enabled:!1,user:"",password:"",host:""}};var a=Symbol("TV_CATALOG_REPOSITORY");var t=Symbol("PLAYBACK_TELEMETRY_PORT");export{a,t as b,e as c};
