@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { LoginUseCase } from '@core/application/usecases/login.usecase';
 
 import { Login } from './login';
 
@@ -9,6 +11,10 @@ describe('Login', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [Login],
+      providers: [
+        provideRouter([]),
+        { provide: LoginUseCase, useValue: { execute: async () => undefined } },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Login);

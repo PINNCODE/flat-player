@@ -1,0 +1,454 @@
+.tv-dashboard {
+  position: relative;
+  min-height: 100dvh;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(6, 171, 255, 0.2) 0%, transparent 45%),
+    radial-gradient(circle at 84% 72%, rgba(16, 91, 199, 0.24) 0%, transparent 46%),
+    linear-gradient(150deg, #040914 0%, #091225 58%, #142544 100%);
+  color: #f2f9ff;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.tv-dashboard__video-layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 2.5rem 3rem;
+  box-sizing: border-box;
+}
+
+.tv-dashboard__video-player {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #000;
+}
+
+.tv-dashboard__video-glow {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(4, 9, 20, 0.08) 30%, rgba(4, 9, 20, 0.66) 100%),
+    linear-gradient(90deg, rgba(13, 21, 40, 0.48) 0%, rgba(13, 21, 40, 0.08) 55%);
+}
+
+.tv-dashboard__video-meta {
+  position: relative;
+  z-index: 1;
+  max-width: 28rem;
+  animation: video-meta-in 280ms ease both;
+}
+
+@keyframes video-meta-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tv-dashboard__video-status {
+  display: inline-flex;
+  margin: 0;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #e8f8ff;
+  background: rgba(255, 64, 64, 0.75);
+}
+
+.tv-dashboard__video-channel {
+  margin: 0.75rem 0 0;
+  font-size: clamp(1.8rem, 3.5vw, 2.7rem);
+  letter-spacing: -0.02em;
+}
+
+.tv-dashboard__overlay {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 1.1rem;
+  min-height: 100dvh;
+  padding: 1.8rem;
+  box-sizing: border-box;
+  background: rgba(4, 11, 23, 0.34);
+  backdrop-filter: blur(6px);
+}
+
+.tv-dashboard__overlay--menu {
+  grid-template-columns: 5.5rem;
+}
+
+.tv-dashboard__overlay--categories {
+  grid-template-columns: 5.5rem minmax(17rem, 22rem);
+}
+
+.tv-dashboard__overlay--channels {
+  grid-template-columns: 5.5rem minmax(17rem, 22rem) minmax(22rem, 32rem);
+}
+
+.tv-dashboard__panel {
+  border: 1px solid rgba(189, 223, 255, 0.2);
+  border-radius: 1rem;
+  background: rgba(9, 20, 37, 0.76);
+  box-shadow: 0 16px 30px rgba(1, 6, 13, 0.45);
+}
+
+.tv-dashboard__panel--menu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem 0.55rem;
+}
+
+.tv-dashboard__menu-item {
+  all: unset;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.65rem 0.3rem;
+  border-radius: 0.75rem;
+  cursor: default;
+  color: rgba(232, 247, 255, 0.74);
+  transition: background 120ms ease, color 120ms ease, transform 120ms ease;
+}
+
+.tv-dashboard__menu-item--focused {
+  color: #ffffff;
+  background: linear-gradient(135deg, rgba(0, 150, 255, 0.5), rgba(0, 208, 255, 0.3));
+  box-shadow: 0 0 0 3px rgba(138, 219, 255, 0.85), 0 0 18px rgba(0, 170, 255, 0.4);
+  transform: translateX(0.15rem);
+}
+
+.tv-dashboard__menu-icon {
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+}
+
+.tv-dashboard__menu-text {
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tv-dashboard__panel--categories,
+.tv-dashboard__panel--channels {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 1rem 1rem 0.85rem;
+  animation: panel-slide-in 200ms ease both;
+}
+
+@keyframes panel-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(1.2rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.tv-dashboard__panel-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.tv-dashboard__panel-title {
+  margin: 0;
+  font-size: 1.18rem;
+  letter-spacing: 0.02em;
+}
+
+.tv-dashboard__panel-hint {
+  font-size: 0.75rem;
+  color: rgba(222, 240, 255, 0.74);
+}
+
+.tv-dashboard__list-container {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  margin-top: 0.8rem;
+}
+
+.tv-dashboard__list {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  list-style: none;
+  scrollbar-width: none;
+}
+
+.tv-dashboard__list::-webkit-scrollbar {
+  display: none;
+}
+
+.tv-dashboard__list-item {
+  display: grid;
+  grid-template-columns: 2.3rem minmax(0, 1fr);
+  gap: 0.6rem;
+  align-items: center;
+  min-height: 3.5rem;
+  margin-bottom: 0.35rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 0.7rem;
+  color: rgba(230, 244, 255, 0.82);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.tv-dashboard__list-item--focused {
+  color: #ffffff;
+  background: rgba(0, 140, 255, 0.38);
+  box-shadow: 0 0 0 3px rgba(152, 219, 255, 0.9), 0 0 20px rgba(0, 160, 255, 0.35);
+}
+
+.tv-dashboard__list-item--active {
+  border-left: 3px solid rgba(133, 222, 255, 0.95);
+}
+
+.tv-dashboard__list-icon {
+  display: grid;
+  place-items: center;
+  border-radius: 0.45rem;
+  padding: 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  background: rgba(205, 230, 255, 0.16);
+}
+
+.tv-dashboard__list-label {
+  font-size: 1.1rem;
+  letter-spacing: 0.01em;
+}
+
+.tv-dashboard__channel-item {
+  display: grid;
+  grid-template-columns: 4.1rem minmax(0, 1fr);
+  gap: 0.7rem;
+  align-items: center;
+  min-height: 4.8rem;
+  margin-bottom: 0.35rem;
+  padding: 0.6rem 0.7rem;
+  border-radius: 0.78rem;
+  color: rgba(230, 245, 255, 0.84);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.tv-dashboard__channel-item--focused {
+  color: #ffffff;
+  background: rgba(0, 129, 255, 0.38);
+  box-shadow: 0 0 0 3px rgba(164, 228, 255, 0.9), 0 0 22px rgba(0, 150, 255, 0.38);
+}
+
+.tv-dashboard__channel-item--active {
+  border-left: 3px solid rgba(74, 230, 255, 0.95);
+}
+
+.tv-dashboard__channel-logo {
+  display: grid;
+  place-items: center;
+  height: 2.8rem;
+  border-radius: 0.6rem;
+  background: rgba(232, 246, 255, 0.15);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.tv-dashboard__channel-logo-img {
+  width: 100%;
+  height: 2.8rem;
+  border-radius: 0.6rem;
+  object-fit: contain;
+  background: rgba(232, 246, 255, 0.12);
+}
+
+.tv-dashboard__channel-meta {
+  min-width: 0;
+}
+
+.tv-dashboard__channel-name {
+  margin: 0;
+  font-size: 1.1rem;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tv-dashboard__program-name {
+  margin: 0.2rem 0 0;
+  font-size: 0.82rem;
+  color: rgba(212, 234, 255, 0.82);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tv-dashboard__program-progress-track {
+  margin-top: 0.45rem;
+  width: 100%;
+  height: 0.4rem;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(214, 237, 255, 0.22);
+}
+
+.tv-dashboard__program-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #32ccff 0%, #007fff 100%);
+}
+
+.tv-dashboard__overflow-indicator {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: rgba(222, 241, 255, 0.8);
+  pointer-events: none;
+}
+
+.tv-dashboard__overflow-indicator--top {
+  top: -0.65rem;
+}
+
+.tv-dashboard__overflow-indicator--bottom {
+  bottom: -0.65rem;
+}
+
+.tv-dashboard__info-bar {
+  position: absolute;
+  z-index: 3;
+  left: 1.8rem;
+  right: 1.8rem;
+  bottom: 1.5rem;
+  display: grid;
+  grid-template-columns: 5.3rem minmax(0, 1fr);
+  gap: 0.8rem;
+  align-items: center;
+  padding: 0.8rem 1rem;
+  border-radius: 0.95rem;
+  border: 1px solid rgba(173, 226, 255, 0.42);
+  background: rgba(6, 15, 28, 0.85);
+  backdrop-filter: blur(8px);
+}
+
+.tv-dashboard__info-logo {
+  display: grid;
+  place-items: center;
+  height: 3.3rem;
+  border-radius: 0.7rem;
+  background: rgba(214, 237, 255, 0.16);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.tv-dashboard__info-logo-img {
+  width: 100%;
+  height: 3.3rem;
+  border-radius: 0.7rem;
+  object-fit: contain;
+  background: rgba(214, 237, 255, 0.12);
+}
+
+.tv-dashboard__info-content {
+  min-width: 0;
+}
+
+.tv-dashboard__info-channel {
+  margin: 0;
+  font-size: 1.02rem;
+}
+
+.tv-dashboard__info-program {
+  margin: 0.18rem 0 0;
+  font-size: 0.86rem;
+  color: rgba(222, 241, 255, 0.84);
+}
+
+.tv-dashboard__toast {
+  position: absolute;
+  z-index: 4;
+  top: 1.2rem;
+  right: 1.2rem;
+  margin: 0;
+  padding: 0.55rem 0.85rem;
+  border-radius: 0.65rem;
+  font-size: 0.8rem;
+  color: #ecf8ff;
+  border: 1px solid rgba(143, 211, 255, 0.4);
+  background: rgba(6, 21, 39, 0.92);
+}
+
+.tv-dashboard__playback-error {
+  position: absolute;
+  z-index: 4;
+  left: 1.2rem;
+  bottom: 6rem;
+  margin: 0;
+  padding: 0.5rem 0.8rem;
+  border-radius: 0.65rem;
+  font-size: 0.82rem;
+  color: #ffe4e4;
+  border: 1px solid rgba(255, 141, 141, 0.55);
+  background: rgba(52, 8, 8, 0.85);
+}
+
+@media (max-width: 1180px) {
+  .tv-dashboard__overlay--categories {
+    grid-template-columns: 5rem minmax(14rem, 17rem);
+  }
+
+  .tv-dashboard__overlay--channels {
+    grid-template-columns: 5rem minmax(14rem, 17rem) minmax(16rem, 1fr);
+  }
+
+  .tv-dashboard__overlay {
+    padding: 1.2rem;
+    gap: 0.8rem;
+  }
+
+  .tv-dashboard__video-layer {
+    padding: 2rem;
+  }
+
+  .tv-dashboard__video-channel {
+    font-size: clamp(1.45rem, 3.2vw, 2rem);
+  }
+}
+
+@media (max-width: 860px) {
+  .tv-dashboard__overlay--channels {
+    grid-template-columns: 4.5rem minmax(0, 1fr);
+  }
+
+  .tv-dashboard__panel--channels {
+    grid-column: 1 / -1;
+    min-height: 18rem;
+  }
+}

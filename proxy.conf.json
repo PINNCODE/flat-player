@@ -3,9 +3,43 @@
     "target": "https://ftvpro.net:8443",
     "secure": false,
     "changeOrigin": true,
+    "headers": {
+      "origin": "https://ftvpro.net:8443",
+      "referer": "https://ftvpro.net:8443/"
+    },
     "logLevel": "debug",
     "pathRewrite": {
       "^/iptv": ""
     }
+  },
+  "/play": {
+    "target": "https://ftvpro.net:8443",
+    "secure": false,
+    "changeOrigin": true,
+    "headers": {
+      "origin": "https://ftvpro.net:8443",
+      "referer": "https://ftvpro.net:8443/"
+    },
+    "logLevel": "debug"
+  },
+  "/key": {
+    "target": "https://ftvpro.net:8443",
+    "secure": false,
+    "changeOrigin": true,
+    "headers": {
+      "origin": "https://ftvpro.net:8443",
+      "referer": "https://ftvpro.net:8443/"
+    },
+    "logLevel": "debug"
+  },
+  "/hls": {
+    "target": "https://ftvpro.net:8443",
+    "secure": false,
+    "changeOrigin": true,
+    "headers": {
+      "origin": "https://ftvpro.net:8443",
+      "referer": "https://ftvpro.net:8443/"
+    },
+    "logLevel": "debug"
   }
 }

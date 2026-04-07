@@ -1,0 +1,149 @@
+<section class="tv-dashboard" aria-label="Pantalla principal de TV">
+  <div class="tv-dashboard__video-layer" aria-label="Video en vivo">
+    <video #videoPlayer class="tv-dashboard__video-player" autoplay playsinline></video>
+    <div class="tv-dashboard__video-glow"></div>
+    @if (videoMetaVisible()) {
+      <div class="tv-dashboard__video-meta">
+        <p class="tv-dashboard__video-status">LIVE</p>
+        <h1 class="tv-dashboard__video-channel">{{ channelLabel() }}</h1>
+      </div>
+    }
+  </div>
+
+  @if (overlayVisible()) {
+    <div
+      class="tv-dashboard__overlay"
+      [class.tv-dashboard__overlay--menu]="activePanel() === 'menu'"
+      [class.tv-dashboard__overlay--categories]="activePanel() === 'categories'"
+      [class.tv-dashboard__overlay--channels]="activePanel() === 'channels'"
+      aria-label="Interfaz de navegacion"
+    >
+      <nav class="tv-dashboard__panel tv-dashboard__panel--menu" aria-label="Menu lateral">
+        @for (item of menuItems; track item.id; let index = $index) {
+          <button
+            type="button"
+            class="tv-dashboard__menu-item"
+            [class.tv-dashboard__menu-item--focused]="isMenuFocused(index)"
+            [attr.aria-label]="item.label"
+          >
+            <span class="tv-dashboard__menu-icon">{{ item.shortLabel }}</span>
+            <span class="tv-dashboard__menu-text">{{ item.label }}</span>
+          </button>
+        }
+      </nav>
+
+      @if (activePanel() !== 'menu') {
+        <section class="tv-dashboard__panel tv-dashboard__panel--categories" aria-label="Categorias">
+        <header class="tv-dashboard__panel-header">
+          <h2 class="tv-dashboard__panel-title">Categorias</h2>
+          <span class="tv-dashboard__panel-hint">{{ categories().length }} disponibles</span>
+        </header>
+        <div class="tv-dashboard__list-container">
+          @if (hasCategoryOverflowUp()) {
+            <span class="tv-dashboard__overflow-indicator tv-dashboard__overflow-indicator--top">Mas arriba</span>
+          }
+
+          <ul class="tv-dashboard__list" aria-label="Lista de categorias">
+            @for (category of visibleCategories(); track category.id; let index = $index) {
+              <li
+                class="tv-dashboard__list-item"
+                [class.tv-dashboard__list-item--focused]="isCategoryFocused(categoryWindowStart() + index)"
+                [class.tv-dashboard__list-item--active]="selectedCategoryIndex() === categoryWindowStart() + index"
+              >
+                <span class="tv-dashboard__list-icon">{{ category.iconLabel }}</span>
+                <span class="tv-dashboard__list-label">{{ category.name }}</span>
+              </li>
+            }
+          </ul>
+
+          @if (hasCategoryOverflowDown()) {
+            <span class="tv-dashboard__overflow-indicator tv-dashboard__overflow-indicator--bottom">Mas abajo</span>
+          }
+        </div>
+      </section>
+      }
+
+      @if (activePanel() === 'channels') {
+        <section class="tv-dashboard__panel tv-dashboard__panel--channels" aria-label="Canales">
+        <header class="tv-dashboard__panel-header">
+          <h2 class="tv-dashboard__panel-title">Canales</h2>
+          <span class="tv-dashboard__panel-hint">{{ focusedChannels().length }} resultados</span>
+        </header>
+        <div class="tv-dashboard__list-container">
+          @if (hasChannelOverflowUp()) {
+            <span class="tv-dashboard__overflow-indicator tv-dashboard__overflow-indicator--top">Mas arriba</span>
+          }
+
+          <ul class="tv-dashboard__list" aria-label="Lista de canales">
+            @for (channel of visibleChannels(); track channel.id; let index = $index) {
+              <li
+                class="tv-dashboard__channel-item"
+                [class.tv-dashboard__channel-item--focused]="isChannelFocused(channelWindowStart() + index)"
+                [class.tv-dashboard__channel-item--active]="currentChannel()?.id === channel.id"
+              >
+                @if (channel.logoUrl) {
+                  <img
+                    class="tv-dashboard__channel-logo-img"
+                    [src]="channel.logoUrl"
+                    [alt]="channel.name"
+                    loading="lazy"
+                  />
+                } @else {
+                  <span class="tv-dashboard__channel-logo">{{ channel.logoLabel }}</span>
+                }
+                <div class="tv-dashboard__channel-meta">
+                  <p class="tv-dashboard__channel-name">{{ channel.name }}</p>
+                  <p class="tv-dashboard__program-name">{{ channel.currentProgram.title }}</p>
+                  <div class="tv-dashboard__program-progress-track">
+                    <div
+                      class="tv-dashboard__program-progress-fill"
+                      [style.width.%]="channel.currentProgram.progressPercent"
+                    ></div>
+                  </div>
+                </div>
+              </li>
+            }
+          </ul>
+
+          @if (hasChannelOverflowDown()) {
+            <span class="tv-dashboard__overflow-indicator tv-dashboard__overflow-indicator--bottom">Mas abajo</span>
+          }
+        </div>
+      </section>
+      }
+    </div>
+  }
+
+  @if (infoBarVisible() && currentChannel()) {
+    <aside class="tv-dashboard__info-bar" aria-label="Informacion del canal actual">
+      @if (currentChannel()?.logoUrl) {
+        <img
+          class="tv-dashboard__info-logo-img"
+          [src]="currentChannel()?.logoUrl"
+          [alt]="currentChannel()?.name"
+          loading="lazy"
+        />
+      } @else {
+        <span class="tv-dashboard__info-logo">{{ currentChannel()?.logoLabel }}</span>
+      }
+      <div class="tv-dashboard__info-content">
+        <p class="tv-dashboard__info-channel">{{ currentChannel()?.name }}</p>
+        <p class="tv-dashboard__info-program">{{ currentChannel()?.currentProgram?.title }}</p>
+        <div class="tv-dashboard__program-progress-track">
+          <div
+            class="tv-dashboard__program-progress-fill"
+            [style.width.%]="currentChannel()?.currentProgram?.progressPercent ?? 0"
+          ></div>
+        </div>
+      </div>
+    </aside>
+  }
+
+  @if (toastMessage()) {
+    <p class="tv-dashboard__toast" role="status">{{ toastMessage() }}</p>
+  }
+
+  @if (streamPlaybackError()) {
+    <p class="tv-dashboard__playback-error" role="alert">{{ streamPlaybackError() }}</p>
+  }
+</section>

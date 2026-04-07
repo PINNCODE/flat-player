@@ -69,9 +69,6 @@
                 @if (submitError()) {
                     <p class="login-page__form-feedback login-page__form-feedback--error" role="alert">{{ submitError() }}</p>
                 }
-                @if (submitSuccess()) {
-                    <p class="login-page__form-feedback login-page__form-feedback--success" role="status">{{ submitSuccess() }}</p>
-                }
             </form>
         </section>
     </div>

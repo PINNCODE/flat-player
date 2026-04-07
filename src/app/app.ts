@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { RouterOutlet } from '@angular/router';
 import { LoginUseCase } from '@core/application/usecases/login.usecase';
 import { Credentials } from '@core/domain/models/credentials.model';
+import { HttpLoaderService } from '@infrastructure/services/http-loader.service';
 import { environment } from '../environments/environment';
 
 @Component({
@@ -15,6 +16,7 @@ export class App implements OnInit {
   protected readonly title = signal('flat-player');
   protected readonly loginStatus = signal<'disabled' | 'loading' | 'success' | 'error'>('disabled');
   protected readonly loginMessage = signal('');
+  protected readonly isHttpLoading = inject(HttpLoaderService).isLoading;
   private readonly loginUseCase = inject(LoginUseCase);
 
   ngOnInit(): void {
@@ -36,7 +38,7 @@ export class App implements OnInit {
       await this.loginUseCase.execute(credentials);
 
       this.loginStatus.set('success');
-      this.loginMessage.set('Login ejecutado correctamente.');
+      this.loginMessage.set('');
     } catch (error) {
       this.loginStatus.set('error');
       this.loginMessage.set(this.resolveLoginErrorMessage(error));

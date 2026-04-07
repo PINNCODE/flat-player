@@ -6,6 +6,7 @@ import {
   signal,
 } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { Credentials } from '@core/domain/models/credentials.model';
 import { LoginUseCase } from '@core/application/usecases/login.usecase';
 
@@ -19,10 +20,10 @@ import { LoginUseCase } from '@core/application/usecases/login.usecase';
 export class Login {
   protected readonly isSubmitting = signal(false);
   protected readonly submitError = signal('');
-  protected readonly submitSuccess = signal('');
 
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly loginUseCase = inject(LoginUseCase);
+  private readonly router = inject(Router);
   protected readonly loginForm = this.formBuilder.group({
     host: ['', [Validators.required, Validators.pattern(/^https?:\/\/.+/i)]],
     username: ['', [Validators.required]],
@@ -40,11 +41,10 @@ export class Login {
     try {
       this.isSubmitting.set(true);
       this.submitError.set('');
-      this.submitSuccess.set('');
 
       await this.loginUseCase.execute(new Credentials(username, password, host));
 
-      this.submitSuccess.set('Login ejecutado correctamente.');
+      await this.router.navigate(['/dashboard']);
     } catch (error) {
       this.submitError.set(this.resolveErrorMessage(error));
     } finally {
