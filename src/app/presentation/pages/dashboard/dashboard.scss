@@ -156,9 +156,9 @@
   flex-direction: column;
   min-height: 0;
   max-height: 100%;
-  padding: 1rem 1rem 0.85rem;
+  padding: 1rem 0.6rem 0.85rem;
   animation: panel-slide-in 200ms ease both;
-  overflow: hidden;
+  overflow: clip;
 }
 
 @keyframes panel-slide-in {
@@ -200,12 +200,13 @@
 .tv-dashboard__list {
   height: 100%;
   margin: 0;
-  padding: 0;
+  padding: 0.3rem 0.4rem;
   overflow: auto;
   list-style: none;
   scrollbar-width: none;
   scroll-behavior: smooth;
-  scroll-padding-block: 2rem; /* deja margen superior e inferior para visualidad */
+  scroll-padding-block: 2rem;
+  box-sizing: border-box;
 }
 
 .tv-dashboard__list::-webkit-scrollbar {
@@ -228,7 +229,7 @@
 .tv-dashboard__list-item--focused {
   color: #ffffff;
   background: rgba(0, 140, 255, 0.38);
-  box-shadow: 0 0 0 3px rgba(152, 219, 255, 0.9), 0 0 20px rgba(0, 160, 255, 0.35);
+  box-shadow: inset 0 0 0 3px rgba(152, 219, 255, 0.9), 0 0 10px rgba(0, 160, 255, 0.22);
 }
 
 .tv-dashboard__list-item--active {
@@ -267,7 +268,7 @@
 .tv-dashboard__channel-item--focused {
   color: #ffffff;
   background: rgba(0, 129, 255, 0.38);
-  box-shadow: 0 0 0 3px rgba(164, 228, 255, 0.9), 0 0 22px rgba(0, 150, 255, 0.38);
+  box-shadow: inset 0 0 0 3px rgba(164, 228, 255, 0.9), 0 0 12px rgba(0, 150, 255, 0.24);
 }
 
 .tv-dashboard__channel-item--active {
