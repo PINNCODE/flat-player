@@ -18,7 +18,6 @@ type OverlayTrigger = 'dpad' | 'ok';
 interface MenuItem {
   readonly id: 'home' | 'guide' | 'search' | 'settings';
   readonly label: string;
-  readonly shortLabel: string;
 }
 
 @Component({
@@ -33,10 +32,10 @@ interface MenuItem {
 })
 export class Dashboard implements AfterViewInit {
   protected readonly menuItems: readonly MenuItem[] = [
-    { id: 'home', label: 'Inicio', shortLabel: 'IN' },
-    { id: 'guide', label: 'Guia', shortLabel: 'GU' },
-    { id: 'search', label: 'Buscar', shortLabel: 'BU' },
-    { id: 'settings', label: 'Ajustes', shortLabel: 'AJ' },
+    { id: 'home', label: 'Inicio' },
+    { id: 'guide', label: 'Guia' },
+    { id: 'search', label: 'Buscar' },
+    { id: 'settings', label: 'Ajustes' },
   ];
 
   protected readonly overlayVisible = signal(false);
