@@ -1,6 +1,12 @@
+:host {
+  display: block;
+  height: 100vh;
+  overflow: hidden;
+}
+
 .tv-dashboard {
   position: relative;
-  min-height: 100vh;
+  height: 100vh;
   overflow: hidden;
   background:
     radial-gradient(circle at 12% 18%, rgba(6, 171, 255, 0.2) 0%, transparent 45%),
