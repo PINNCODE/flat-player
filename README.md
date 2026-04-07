@@ -57,3 +57,16 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+## MVP 1
+
+This repository has reached its first MVP milestone.
+
+- MVP version: `v0.1.0-mvp`
+- Date: `2026-04-06`
+- Scope:
+	- Video-First dashboard experience for Samsung TV (Tizen)
+	- Remote-first navigation with arrows and OK interactions
+	- Real IPTV catalog integration based on login session
+	- Channel playback with stream URL resolution and fallback strategy
+	- Playback telemetry and development proxy support for IPTV paths
