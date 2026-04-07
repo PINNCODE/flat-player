@@ -20,36 +20,53 @@ async function findMainBundle() {
 /**
  * Reemplaza `inset: <value>` por las cuatro propiedades físicas equivalentes
  * para compatibilidad con WebKit antiguo en Tizen (no soporta CSS Logical Properties).
- * También maneja `inset: <top> <right> <bottom> <left>` con cuatro valores.
+ *
+ * Parchea tanto los archivos .css como los bundles .js, ya que Angular embebe
+ * los estilos de componente como strings dentro del bundle JS principal.
  */
 async function patchCssForTizen() {
   const files = await fs.readdir(distRoot);
-  const cssFiles = files.filter((f) => f.endsWith('.css'));
 
+  const insetReplacer = (match, value) => {
+    const parts = value.trim().split(/\s+/);
+    if (parts.length === 1) {
+      return `top:${parts[0]};right:${parts[0]};bottom:${parts[0]};left:${parts[0]};`;
+    }
+    if (parts.length === 2) {
+      return `top:${parts[0]};right:${parts[1]};bottom:${parts[0]};left:${parts[1]};`;
+    }
+    if (parts.length === 3) {
+      return `top:${parts[0]};right:${parts[1]};bottom:${parts[2]};left:${parts[1]};`;
+    }
+    if (parts.length === 4) {
+      return `top:${parts[0]};right:${parts[1]};bottom:${parts[2]};left:${parts[3]};`;
+    }
+    return match;
+  };
+
+  // La clase de caracteres excluye comillas y backticks para no cruzar limites de string JS.
+  const insetRegex = /\binset:([^;}{\'\"`]+);/g;
+
+  const cssFiles = files.filter((f) => f.endsWith('.css'));
   for (const cssFile of cssFiles) {
     const filePath = path.join(distRoot, cssFile);
-    let css = await fs.readFile(filePath, 'utf8');
-
-    // inset con 1 valor: inset: X → top/right/bottom/left: X
-    css = css.replace(/\binset:\s*([^;}{]+?)\s*;/g, (match, value) => {
-      const parts = value.trim().split(/\s+/);
-      if (parts.length === 1) {
-        return `top:${parts[0]};right:${parts[0]};bottom:${parts[0]};left:${parts[0]};`;
-      }
-      if (parts.length === 2) {
-        return `top:${parts[0]};right:${parts[1]};bottom:${parts[0]};left:${parts[1]};`;
-      }
-      if (parts.length === 3) {
-        return `top:${parts[0]};right:${parts[1]};bottom:${parts[2]};left:${parts[1]};`;
-      }
-      if (parts.length === 4) {
-        return `top:${parts[0]};right:${parts[1]};bottom:${parts[2]};left:${parts[3]};`;
-      }
-      return match;
-    });
-
-    await fs.writeFile(filePath, css, 'utf8');
+    let content = await fs.readFile(filePath, 'utf8');
+    content = content.replace(insetRegex, insetReplacer);
+    await fs.writeFile(filePath, content, 'utf8');
     console.log(`Tizen CSS patched: ${cssFile}`);
+  }
+
+  // Angular embebe los estilos de componente como strings dentro del bundle JS.
+  // Se parchea el app.tizen.js y los chunks JS del dist.
+  const jsFiles = [tizenBundleName, ...files.filter((f) => f.endsWith('.js') && f !== tizenBundleName)];
+  for (const jsFile of jsFiles) {
+    const filePath = path.join(distRoot, jsFile);
+    let content = await fs.readFile(filePath, 'utf8');
+    const patched = content.replace(insetRegex, insetReplacer);
+    if (patched !== content) {
+      await fs.writeFile(filePath, patched, 'utf8');
+      console.log(`Tizen JS  patched: ${jsFile}`);
+    }
   }
 }
 
@@ -58,7 +75,7 @@ async function rewriteIndex() {
   const withoutModulePreload = html.replace(/<link rel="modulepreload"[^>]*>/g, '');
   const rewrittenScript = withoutModulePreload.replace(
     /<script\s+src="[^"]+"\s+type="module"><\/script>/,
-    `<script src="${tizenBundleName}"></script>`,
+    '<script src="' + tizenBundleName + '"></script>',
   );
 
   if (rewrittenScript === html) {
@@ -85,7 +102,7 @@ async function run() {
 
   await patchCssForTizen();
   await rewriteIndex();
-  console.log(`Tizen bundle generado: ${outputFile}`);
+  console.log('Tizen bundle generado: ' + outputFile);
 }
 
 run().catch((error) => {
