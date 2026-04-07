@@ -1,6 +1,6 @@
 .tv-dashboard {
   position: relative;
-  min-height: 100dvh;
+  min-height: 100vh;
   overflow: hidden;
   background:
     radial-gradient(circle at 12% 18%, rgba(6, 171, 255, 0.2) 0%, transparent 45%),
@@ -78,7 +78,7 @@
   z-index: 2;
   display: grid;
   gap: 1.1rem;
-  height: 100dvh;
+  height: 100vh;
   overflow: hidden;
   padding: 1.8rem;
   box-sizing: border-box;
