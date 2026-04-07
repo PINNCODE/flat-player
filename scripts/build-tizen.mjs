@@ -17,6 +17,42 @@ async function findMainBundle() {
   return path.join(distRoot, mainFile);
 }
 
+/**
+ * Reemplaza `inset: <value>` por las cuatro propiedades físicas equivalentes
+ * para compatibilidad con WebKit antiguo en Tizen (no soporta CSS Logical Properties).
+ * También maneja `inset: <top> <right> <bottom> <left>` con cuatro valores.
+ */
+async function patchCssForTizen() {
+  const files = await fs.readdir(distRoot);
+  const cssFiles = files.filter((f) => f.endsWith('.css'));
+
+  for (const cssFile of cssFiles) {
+    const filePath = path.join(distRoot, cssFile);
+    let css = await fs.readFile(filePath, 'utf8');
+
+    // inset con 1 valor: inset: X → top/right/bottom/left: X
+    css = css.replace(/\binset:\s*([^;}{]+?)\s*;/g, (match, value) => {
+      const parts = value.trim().split(/\s+/);
+      if (parts.length === 1) {
+        return `top:${parts[0]};right:${parts[0]};bottom:${parts[0]};left:${parts[0]};`;
+      }
+      if (parts.length === 2) {
+        return `top:${parts[0]};right:${parts[1]};bottom:${parts[0]};left:${parts[1]};`;
+      }
+      if (parts.length === 3) {
+        return `top:${parts[0]};right:${parts[1]};bottom:${parts[2]};left:${parts[1]};`;
+      }
+      if (parts.length === 4) {
+        return `top:${parts[0]};right:${parts[1]};bottom:${parts[2]};left:${parts[3]};`;
+      }
+      return match;
+    });
+
+    await fs.writeFile(filePath, css, 'utf8');
+    console.log(`Tizen CSS patched: ${cssFile}`);
+  }
+}
+
 async function rewriteIndex() {
   const html = await fs.readFile(indexPath, 'utf8');
   const withoutModulePreload = html.replace(/<link rel="modulepreload"[^>]*>/g, '');
@@ -47,6 +83,7 @@ async function run() {
     legalComments: 'none',
   });
 
+  await patchCssForTizen();
   await rewriteIndex();
   console.log(`Tizen bundle generado: ${outputFile}`);
 }
