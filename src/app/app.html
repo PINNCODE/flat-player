@@ -1,8 +1,15 @@
-@if (isHttpLoading()) {
-	<div class="http-loader" role="status" aria-live="polite" aria-label="Cargando datos">
+@if (isAutoLogging()) {
+	<div class="http-loader" role="status" aria-live="polite" aria-label="Iniciando sesión">
 		<div class="http-loader__spinner" aria-hidden="true"></div>
-		<p class="http-loader__label">Cargando...</p>
+		<p class="http-loader__label">Iniciando...</p>
 	</div>
-}
+} @else {
+	@if (isHttpLoading()) {
+		<div class="http-loader" role="status" aria-live="polite" aria-label="Cargando datos">
+			<div class="http-loader__spinner" aria-hidden="true"></div>
+			<p class="http-loader__label">Cargando...</p>
+		</div>
+	}
 
-<router-outlet />
+	<router-outlet />
+}

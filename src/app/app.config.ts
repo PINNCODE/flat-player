@@ -10,6 +10,7 @@ import { playbackTelemetryProvider } from '@infrastructure/providers/playback-te
 import { tvCatalogProvider } from '@infrastructure/providers/tv-catalog.provider';
 import { epgProvider } from '@infrastructure/providers/epg.provider';
 import { tizenRemoteKeysProvider } from '@infrastructure/providers/tizen-remote-keys.provider';
+import { credentialsPersistenceProvider } from '@infrastructure/providers/credentials-persistence.provider';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -18,6 +19,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes, withHashLocation()),
     authProvider,
     authSessionProvider,
+    credentialsPersistenceProvider,
     playbackTelemetryProvider,
     tvCatalogProvider,
     epgProvider,
