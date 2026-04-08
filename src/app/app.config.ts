@@ -12,6 +12,8 @@ import { epgProvider } from '@infrastructure/providers/epg.provider';
 import { tizenRemoteKeysProvider } from '@infrastructure/providers/tizen-remote-keys.provider';
 import { credentialsPersistenceProvider } from '@infrastructure/providers/credentials-persistence.provider';
 
+import { userSettingsProvider } from '@infrastructure/providers/user-settings.provider';
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
@@ -24,5 +26,6 @@ export const appConfig: ApplicationConfig = {
     tvCatalogProvider,
     epgProvider,
     tizenRemoteKeysProvider,
+    userSettingsProvider,
   ],
 };

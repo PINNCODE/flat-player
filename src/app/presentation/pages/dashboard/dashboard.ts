@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, ViewChild, computed, inject, signal, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, QueryList, ViewChild, ViewChildren, computed, inject, signal, viewChild } from '@angular/core';
 import { ChangeChannelUseCase, ChannelSelection } from '@core/application/usecases/change-channel.usecase';
 import { GetTvCatalogUseCase } from '@core/application/usecases/get-tv-catalog.usecase';
 import { LogoutUseCase } from '@core/application/usecases/logout.usecase';
@@ -12,10 +12,15 @@ import { EpgListing } from '@core/domain/models/epg-listing.model';
 import { Router } from '@angular/router';
 import { UserInfo } from '@core/domain/models/auth-response.model';
 import { GetUserInfoUseCase } from '@core/application/usecases/get-user-info.usecase';
+import { HISPANIC_AMERICA_COUNTRIES } from '@core/domain/models/user-settings.model';
+import { GetUserSettingsUseCase } from '@core/application/usecases/get-user-settings.usecase';
+import { SaveUserCountryUseCase } from '@core/application/usecases/save-user-country.usecase';
+import { GetHomeRecommendationsUseCase } from '@core/application/usecases/get-home-recommendations.usecase';
+import { HomeRecommendations } from '@core/domain/models/home-recommendations.model';
 import { VideoPlaybackFacade } from '../../services/video-playback.facade';
 import { environment } from '../../../../environments/environment';
 
-type OverlayPanel = 'menu' | 'categories' | 'channels' | 'search' | 'settings';
+type OverlayPanel = 'home' | 'menu' | 'categories' | 'channels' | 'search' | 'settings';
 type OverlayTrigger = 'dpad' | 'ok';
 
 interface MenuItem {
@@ -42,7 +47,7 @@ export class Dashboard implements AfterViewInit {
   ];
 
   protected readonly overlayVisible = signal(false);
-  protected readonly activePanel = signal<OverlayPanel>('menu');
+  protected readonly activePanel = signal<OverlayPanel>('home');
   protected readonly focusedMenuIndex = signal(0);
 
   protected readonly categories = signal<readonly TvCategory[]>([]);
@@ -63,6 +68,14 @@ export class Dashboard implements AfterViewInit {
   protected readonly userInfo = signal<UserInfo | null>(null);
   protected readonly showLogoutDialog = signal(false);
   protected readonly logoutDialogActionIndex = signal(1); // 0: Continuar, 1: Cancelar
+
+  protected readonly settingsFocusedIndex = signal(0); // 0: Country Selector, 1: Logout
+  protected readonly userCountry = signal<string | null>(null);
+  protected readonly availableCountries = HISPANIC_AMERICA_COUNTRIES;
+
+  protected readonly homeRecommendations = signal<HomeRecommendations | null>(null);
+  protected readonly homeFocusedRowIndex = signal(0);
+  protected readonly homeFocusedItemIndex = signal(0);
 
   protected readonly focusedChannel = computed(() => {
     if (this.activePanel() === 'search') {
@@ -129,6 +142,8 @@ export class Dashboard implements AfterViewInit {
   private readonly videoPlayerRef = viewChild<ElementRef<HTMLVideoElement>>('videoPlayer');
   @ViewChild('channelsList') channelsList?: ElementRef<HTMLUListElement>;
   @ViewChild('searchInput') searchInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('homeRowsContainer') homeRowsContainer?: ElementRef<HTMLDivElement>;
+  @ViewChildren('homeRowItem') homeRowItems?: QueryList<ElementRef<HTMLDivElement>>;
 
   private readonly getTvCatalogUseCase = inject(GetTvCatalogUseCase);
   private readonly changeChannelUseCase = inject(ChangeChannelUseCase);
@@ -138,6 +153,9 @@ export class Dashboard implements AfterViewInit {
   private readonly trackPlaybackErrorUseCase = inject(TrackPlaybackErrorUseCase);
   private readonly getChannelEpgUseCase = inject(GetChannelEpgUseCase);
   private readonly getUserInfoUseCase = inject(GetUserInfoUseCase);
+  private readonly getUserSettingsUseCase = inject(GetUserSettingsUseCase);
+  private readonly saveUserCountryUseCase = inject(SaveUserCountryUseCase);
+  private readonly getHomeRecommendationsUseCase = inject(GetHomeRecommendationsUseCase);
   private readonly videoPlaybackFacade = inject(VideoPlaybackFacade);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -256,6 +274,10 @@ export class Dashboard implements AfterViewInit {
         targetChannelIndex: 0,
       });
 
+      const settings = this.getUserSettingsUseCase.execute();
+      this.userCountry.set(settings.country);
+      this.refreshHomeRecommendations();
+
       if (!initialSelection) {
         this.showToast('No hay canales disponibles en este momento.');
         return;
@@ -304,6 +326,10 @@ export class Dashboard implements AfterViewInit {
   }
 
   private handleOverlayAction(action: 'up' | 'down' | 'left' | 'right' | 'ok'): void {
+    if (this.activePanel() === 'home') {
+      this.handleHomeNavigation(action);
+      return;
+    }
     switch (this.activePanel()) {
       case 'menu':
         this.handleMenuNavigation(action);
@@ -339,7 +365,11 @@ export class Dashboard implements AfterViewInit {
     if (action === 'right') {
       if (item.id === 'settings') {
         this.activePanel.set('settings');
+        this.settingsFocusedIndex.set(0);
         this.userInfo.set(this.getUserInfoUseCase.execute());
+      } else if (item.id === 'home') {
+        this.activePanel.set('home');
+        this.refreshHomeRecommendations();
       } else {
         this.activePanel.set('categories');
       }
@@ -353,7 +383,8 @@ export class Dashboard implements AfterViewInit {
 
     switch (item.id) {
       case 'home':
-        this.overlayVisible.set(false);
+        this.activePanel.set('home');
+        this.refreshHomeRecommendations();
         return;
       case 'guide':
         this.activePanel.set('categories');
@@ -365,6 +396,7 @@ export class Dashboard implements AfterViewInit {
         return;
       case 'settings':
         this.activePanel.set('settings');
+        this.settingsFocusedIndex.set(0);
         this.userInfo.set(this.getUserInfoUseCase.execute());
         return;
     }
@@ -495,13 +527,38 @@ export class Dashboard implements AfterViewInit {
     }
 
     if (action === 'left') {
-      this.activePanel.set('menu');
+      if (this.settingsFocusedIndex() === 0) {
+        // Change country left
+        this.cycleCountry(-1);
+      } else {
+        this.activePanel.set('menu');
+      }
       return;
     }
 
+    if (action === 'right') {
+       if (this.settingsFocusedIndex() === 0) {
+          // Change country right
+          this.cycleCountry(1);
+       }
+       return;
+    }
+
+    if (action === 'up') {
+       this.settingsFocusedIndex.set(0);
+       return;
+    }
+
+    if (action === 'down') {
+       this.settingsFocusedIndex.set(1);
+       return;
+    }
+
     if (action === 'ok') {
-      this.showLogoutDialog.set(true);
-      this.logoutDialogActionIndex.set(1);
+      if (this.settingsFocusedIndex() === 1) {
+        this.showLogoutDialog.set(true);
+        this.logoutDialogActionIndex.set(1);
+      }
       return;
     }
   }
@@ -784,5 +841,132 @@ export class Dashboard implements AfterViewInit {
     }
 
     return centered;
+  }
+
+  private cycleCountry(delta: number): void {
+    const current = this.userCountry();
+    let index = current ? this.availableCountries.indexOf(current) : -1;
+    if (index === -1) {
+      index = 0;
+    } else {
+      index = (index + delta + this.availableCountries.length) % this.availableCountries.length;
+    }
+    const selected = this.availableCountries[index];
+    this.userCountry.set(selected);
+    this.saveUserCountryUseCase.execute(selected);
+    this.refreshHomeRecommendations();
+  }
+
+  private refreshHomeRecommendations(): void {
+    const recommendations = this.getHomeRecommendationsUseCase.execute(this.categories(), this.userCountry());
+    this.homeRecommendations.set(recommendations);
+    this.homeFocusedRowIndex.set(0);
+    this.homeFocusedItemIndex.set(0);
+    this.scrollHomeRowsToTop();
+  }
+
+  private handleHomeNavigation(action: 'up' | 'down' | 'left' | 'right' | 'ok'): void {
+    const recs = this.homeRecommendations();
+    if (!recs) return;
+
+    if (action === 'left') {
+      if (this.homeFocusedItemIndex() > 0) {
+        this.homeFocusedItemIndex.update(i => i - 1);
+      } else {
+        this.activePanel.set('menu');
+      }
+      return;
+    }
+
+    if (action === 'right') {
+      const row = recs.rows[this.homeFocusedRowIndex()];
+      if (row && this.homeFocusedItemIndex() < row.channels.length - 1) {
+         this.homeFocusedItemIndex.update(i => i + 1);
+      }
+      return;
+    }
+
+    if (action === 'up') {
+      if (this.homeFocusedRowIndex() > 0) {
+         this.homeFocusedRowIndex.update(i => i - 1);
+         this.homeFocusedItemIndex.set(0);
+         this.scrollHomeRowIntoView();
+      }
+      return;
+    }
+
+    if (action === 'down') {
+      if (this.homeFocusedRowIndex() < recs.rows.length - 1) {
+         this.homeFocusedRowIndex.update(i => i + 1);
+         this.homeFocusedItemIndex.set(0);
+         this.scrollHomeRowIntoView();
+      }
+      return;
+    }
+
+    if (action === 'ok') {
+       let targetChannel: TvChannel | null = null;
+
+       const row = recs.rows[this.homeFocusedRowIndex()];
+       if (row) {
+         targetChannel = row.channels[this.homeFocusedItemIndex()];
+       }
+
+       if (targetChannel) {
+          // A bit hacky but we scan all categories to find indices
+          let found = false;
+          for (let catIdx = 0; catIdx < this.categories().length; catIdx++) {
+            const cat = this.categories()[catIdx];
+            for (let chIdx = 0; chIdx < cat.channels.length; chIdx++) {
+              if (cat.channels[chIdx].id === targetChannel.id) {
+                 this.applyChannelSelection(catIdx, chIdx, targetChannel);
+                 this.overlayVisible.set(false);
+                 this.showInfoBar();
+                 found = true;
+                 break;
+              }
+            }
+            if (found) break;
+          }
+       }
+    }
+  }
+
+  private scrollHomeRowsToTop(): void {
+    const container = this.homeRowsContainer?.nativeElement;
+    if (!container) {
+      return;
+    }
+
+    container.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  private scrollHomeRowIntoView(): void {
+    const container = this.homeRowsContainer?.nativeElement;
+    const rowIndex = this.homeFocusedRowIndex();
+
+    if (!container || rowIndex < 0) {
+      return;
+    }
+
+    const rowElement = this.homeRowItems?.get(rowIndex)?.nativeElement;
+    if (!rowElement) {
+      return;
+    }
+
+    const rowTop = rowElement.offsetTop;
+    const rowBottom = rowTop + rowElement.offsetHeight;
+    const viewportTop = container.scrollTop;
+    const viewportBottom = viewportTop + container.clientHeight;
+    const padding = 12;
+
+    if (rowTop - padding < viewportTop) {
+      container.scrollTo({ top: Math.max(0, rowTop - padding), behavior: 'smooth' });
+      return;
+    }
+
+    if (rowBottom + padding > viewportBottom) {
+      container.scrollTo({ top: rowBottom - container.clientHeight + padding, behavior: 'smooth' });
+    }
   }
 }
