@@ -5,17 +5,24 @@ import type { TvChannel } from '@core/domain/models/tv-catalog.model';
 
 class AuthSessionPortStub implements AuthSessionPort {
   private credentials: Credentials | null = null;
+  private userInfo: any | null = null;
 
-  store(credentials: Credentials): void {
+  store(credentials: Credentials, userInfo?: any): void {
     this.credentials = credentials;
+    this.userInfo = userInfo || null;
   }
 
   retrieve(): Credentials | null {
     return this.credentials;
   }
 
+  retrieveUserInfo(): any | null {
+    return this.userInfo;
+  }
+
   clear(): void {
     this.credentials = null;
+    this.userInfo = null;
   }
 }
 

@@ -14,6 +14,7 @@ describe('auth guards', () => {
     authSessionMock = {
       store: vi.fn(),
       retrieve: vi.fn(),
+      retrieveUserInfo: vi.fn(),
       clear: vi.fn(),
     };
 

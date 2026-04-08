@@ -10,10 +10,12 @@ import { GetChannelEpgUseCase } from '@core/application/usecases/get-channel-epg
 import { TvCategory, TvChannel } from '@core/domain/models/tv-catalog.model';
 import { EpgListing } from '@core/domain/models/epg-listing.model';
 import { Router } from '@angular/router';
+import { UserInfo } from '@core/domain/models/auth-response.model';
+import { GetUserInfoUseCase } from '@core/application/usecases/get-user-info.usecase';
 import { VideoPlaybackFacade } from '../../services/video-playback.facade';
 import { environment } from '../../../../environments/environment';
 
-type OverlayPanel = 'menu' | 'categories' | 'channels' | 'search';
+type OverlayPanel = 'menu' | 'categories' | 'channels' | 'search' | 'settings';
 type OverlayTrigger = 'dpad' | 'ok';
 
 interface MenuItem {
@@ -57,6 +59,10 @@ export class Dashboard implements AfterViewInit {
   protected readonly searchResults = signal<readonly ChannelSelection[]>([]);
   protected readonly isSearchInputFocused = signal(true);
   protected readonly focusedSearchResultIndex = signal(0);
+
+  protected readonly userInfo = signal<UserInfo | null>(null);
+  protected readonly showLogoutDialog = signal(false);
+  protected readonly logoutDialogActionIndex = signal(1); // 0: Continuar, 1: Cancelar
 
   protected readonly focusedChannel = computed(() => {
     if (this.activePanel() === 'search') {
@@ -131,6 +137,7 @@ export class Dashboard implements AfterViewInit {
   private readonly resolveStreamUrlUseCase = inject(ResolveStreamUrlUseCase);
   private readonly trackPlaybackErrorUseCase = inject(TrackPlaybackErrorUseCase);
   private readonly getChannelEpgUseCase = inject(GetChannelEpgUseCase);
+  private readonly getUserInfoUseCase = inject(GetUserInfoUseCase);
   private readonly videoPlaybackFacade = inject(VideoPlaybackFacade);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -310,6 +317,9 @@ export class Dashboard implements AfterViewInit {
       case 'search':
         this.handleSearchNavigation(action);
         return;
+      case 'settings':
+        this.handleSettingsNavigation(action);
+        return;
     }
   }
 
@@ -324,8 +334,15 @@ export class Dashboard implements AfterViewInit {
       return;
     }
 
+    const item = this.menuItems[this.focusedMenuIndex()];
+
     if (action === 'right') {
-      this.activePanel.set('categories');
+      if (item.id === 'settings') {
+        this.activePanel.set('settings');
+        this.userInfo.set(this.getUserInfoUseCase.execute());
+      } else {
+        this.activePanel.set('categories');
+      }
       return;
     }
 
@@ -333,8 +350,6 @@ export class Dashboard implements AfterViewInit {
       this.overlayVisible.set(false);
       return;
     }
-
-    const item = this.menuItems[this.focusedMenuIndex()];
 
     switch (item.id) {
       case 'home':
@@ -349,7 +364,8 @@ export class Dashboard implements AfterViewInit {
         setTimeout(() => this.searchInput?.nativeElement.focus(), 0);
         return;
       case 'settings':
-        this.logout();
+        this.activePanel.set('settings');
+        this.userInfo.set(this.getUserInfoUseCase.execute());
         return;
     }
   }
@@ -456,6 +472,36 @@ export class Dashboard implements AfterViewInit {
         this.overlayVisible.set(false);
         this.showInfoBar();
       }
+      return;
+    }
+  }
+
+  private handleSettingsNavigation(action: 'up' | 'down' | 'left' | 'right' | 'ok'): void {
+    if (this.showLogoutDialog()) {
+      if (action === 'left' || action === 'right') {
+        this.logoutDialogActionIndex.update((i) => i === 0 ? 1 : 0);
+        return;
+      }
+      if (action === 'ok') {
+        if (this.logoutDialogActionIndex() === 0) {
+          this.logout();
+        } else {
+          this.showLogoutDialog.set(false);
+        }
+        return;
+      }
+      // Bloquear navegación up/down mientras esté en el diálogo.
+      return;
+    }
+
+    if (action === 'left') {
+      this.activePanel.set('menu');
+      return;
+    }
+
+    if (action === 'ok') {
+      this.showLogoutDialog.set(true);
+      this.logoutDialogActionIndex.set(1);
       return;
     }
   }
@@ -584,6 +630,14 @@ export class Dashboard implements AfterViewInit {
     if (isNaN(unix)) return '00:00';
     const date = new Date(unix * 1000);
     return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  formatUserInfoDate(timestamp: string | undefined | null): string {
+    if (!timestamp || timestamp === 'null') return 'N/A';
+    const unix = parseInt(timestamp, 10);
+    if (isNaN(unix)) return timestamp;
+    const date = new Date(unix * 1000);
+    return date.toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' });
   }
 
   protected onVideoLayerClick(): void {

@@ -17,7 +17,7 @@ export class LoginUseCase{
 
     async execute(credentials: Credentials): Promise<AuthResponse> {
         const response = await this.authRepository.login(credentials);
-        this.authSession.store(credentials);
+        this.authSession.store(credentials, response.user_info);
         await this.credentialsPersistence.save(credentials);
         return response;
     }

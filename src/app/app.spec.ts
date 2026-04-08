@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { LoginUseCase } from '@core/application/usecases/login.usecase';
+import { AutoLoginUseCase } from '@core/application/usecases/auto-login.usecase';
 import { App } from './app';
 
 describe('App', () => {
@@ -10,6 +11,7 @@ describe('App', () => {
       providers: [
         provideRouter([]),
         { provide: LoginUseCase, useValue: { execute: async () => undefined } },
+        { provide: AutoLoginUseCase, useValue: { execute: async () => false } },
       ],
     }).compileComponents();
   });

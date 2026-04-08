@@ -20,6 +20,20 @@ describe('AuthSessionService', () => {
     expect(localStorage.getItem('flat-player-auth-session')).toBeNull();
   });
 
+  it('stores and retrieves UserInfo', () => {
+    const credentials = new Credentials('demo-user', 'demo-pass', 'https://example.com');
+    const userInfo = {
+      username: 'test', password: '', message: '', auth: 1, status: 'Active',
+      exp_date: '0', is_trial: '0', active_cons: '0', created_at: '0', max_connections: '1', allowed_output_formats: []
+    };
+
+    service.store(credentials, userInfo as any);
+
+    expect(service.retrieveUserInfo()?.username).toBe('test');
+    expect(sessionStorage.getItem('flat-player-auth-session')).toContain('userInfo');
+  });
+
+
   it('restores a legacy localStorage session and migrates it to sessionStorage', () => {
     localStorage.setItem(
       'flat-player-auth-session',

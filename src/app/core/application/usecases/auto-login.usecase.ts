@@ -20,8 +20,8 @@ export class AutoLoginUseCase {
     if (!credentials) return false;
 
     try {
-      await this.authRepository.login(credentials);
-      this.authSession.store(credentials);
+      const response = await this.authRepository.login(credentials);
+      this.authSession.store(credentials, response.user_info);
       return true;
     } catch {
       return false;

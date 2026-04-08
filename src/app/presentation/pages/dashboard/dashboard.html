@@ -14,7 +14,8 @@
   <div class="tv-dashboard__overlay" [class.tv-dashboard__overlay--menu]="activePanel() === 'menu'"
     [class.tv-dashboard__overlay--categories]="activePanel() === 'categories'"
     [class.tv-dashboard__overlay--channels]="activePanel() === 'channels'"
-    [class.tv-dashboard__overlay--search]="activePanel() === 'search'" aria-label="Interfaz de navegacion">
+    [class.tv-dashboard__overlay--search]="activePanel() === 'search'"
+    [class.tv-dashboard__overlay--settings]="activePanel() === 'settings'" aria-label="Interfaz de navegacion">
     <nav class="tv-dashboard__panel tv-dashboard__panel--menu" aria-label="Menu lateral">
       @for (item of menuItems; track item.id; let index = $index) {
       <button type="button" class="tv-dashboard__menu-item"
@@ -169,6 +170,39 @@
     </section>
     }
 
+    @if (activePanel() === 'settings') {
+    <section class="tv-dashboard__panel tv-dashboard__panel--settings" aria-label="Ajustes">
+      <header class="tv-dashboard__panel-header">
+        <h2 class="tv-dashboard__panel-title">Ajustes</h2>
+      </header>
+
+      <div class="tv-dashboard__settings-content">
+        @if (userInfo()) {
+        <div class="tv-dashboard__settings-card">
+          <h3 class="tv-dashboard__settings-card-title">Información de la Cuenta</h3>
+          <ul class="tv-dashboard__settings-list">
+            <li><span class="tv-dashboard__settings-label">Usuario</span> <span class="tv-dashboard__settings-value">{{ userInfo()?.username }}</span></li>
+            <li><span class="tv-dashboard__settings-label">Estado</span> <span class="tv-dashboard__settings-value">{{ userInfo()?.status }}</span></li>
+            <li><span class="tv-dashboard__settings-label">Tipo</span> <span class="tv-dashboard__settings-value">{{ userInfo()?.is_trial === '1' ? 'Prueba' : 'Premium' }}</span></li>
+            <li><span class="tv-dashboard__settings-label">Conexiones</span> <span class="tv-dashboard__settings-value">{{ userInfo()?.active_cons }} / {{ userInfo()?.max_connections }}</span></li>
+            <li><span class="tv-dashboard__settings-label">Creada</span> <span class="tv-dashboard__settings-value">{{ formatUserInfoDate(userInfo()?.created_at) }}</span></li>
+            <li><span class="tv-dashboard__settings-label">Expira</span> <span class="tv-dashboard__settings-value">{{ formatUserInfoDate(userInfo()?.exp_date) }}</span></li>
+          </ul>
+        </div>
+        }
+
+        <button type="button" class="tv-dashboard__settings-action-btn" [class.tv-dashboard__settings-action-btn--focused]="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+          <span style="margin-left: 0.5rem;">Cerrar sesión</span>
+        </button>
+      </div>
+    </section>
+    }
+
     @if (activePanel() === 'channels' || activePanel() === 'search') {
     <section class="tv-dashboard__panel tv-dashboard__panel--epg" aria-label="Guia de programacion">
       <header class="tv-dashboard__panel-header">
@@ -193,6 +227,24 @@
         }
       </div>
     </section>
+    }
+
+    @if (showLogoutDialog()) {
+    <div class="tv-dashboard__dialog-overlay" aria-hidden="true">
+      <div class="tv-dashboard__dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title">
+        <h2 id="dialog-title" class="tv-dashboard__dialog-title">¿Cerrar sesión?</h2>
+        <p class="tv-dashboard__dialog-desc">Tu información se eliminará y volverás al inicio de sesión.</p>
+        
+        <div class="tv-dashboard__dialog-actions">
+          <button type="button" class="tv-dashboard__dialog-btn" [class.tv-dashboard__dialog-btn--focused]="logoutDialogActionIndex() === 0">
+            Continuar
+          </button>
+          <button type="button" class="tv-dashboard__dialog-btn" [class.tv-dashboard__dialog-btn--focused]="logoutDialogActionIndex() === 1">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
     }
   </div>
   }
