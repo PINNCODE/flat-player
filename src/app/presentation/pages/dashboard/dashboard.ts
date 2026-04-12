@@ -19,8 +19,8 @@ import { GetHomeRecommendationsUseCase } from '@core/application/usecases/get-ho
 import { HomeRecommendations } from '@core/domain/models/home-recommendations.model';
 import { VideoPlaybackFacade } from '../../services/video-playback.facade';
 import { environment } from '../../../../environments/environment';
-import { DashboardLogoutDialog } from './dashboard-logout-dialog';
-import { DashboardSettingsPanel } from './dashboard-settings-panel';
+import { DashboardLogoutDialog } from './logout-dialog/dashboard-logout-dialog';
+import { DashboardSettingsPanel } from './settings-panel/dashboard-settings-panel';
 
 type OverlayPanel = 'home' | 'menu' | 'categories' | 'channels' | 'search' | 'settings';
 type OverlayTrigger = 'dpad' | 'ok';
