@@ -47,9 +47,15 @@
   right: 0;
   bottom: 0;
   left: 0;
+  opacity: 0;
+  transition: opacity 280ms ease;
   background:
     linear-gradient(180deg, rgba(4, 9, 20, 0.08) 30%, rgba(4, 9, 20, 0.66) 100%),
     linear-gradient(90deg, rgba(13, 21, 40, 0.48) 0%, rgba(13, 21, 40, 0.08) 55%);
+}
+
+.tv-dashboard__video-glow--visible {
+  opacity: 1;
 }
 
 .tv-dashboard__video-meta {
@@ -130,6 +136,52 @@
 
 .tv-dashboard__overlay--settings {
   grid-template-columns: 6.2rem 1fr;
+}
+
+.tv-dashboard__video-player,
+.tv-dashboard__video-glow {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+.tv-dashboard__list,
+.tv-dashboard__epg-guide-list,
+.tv-dashboard__epg-bar,
+.tv-dashboard__home-rows-container {
+  scrollbar-width: none;
+}
+
+.tv-dashboard__list::-webkit-scrollbar,
+.tv-dashboard__epg-guide-list::-webkit-scrollbar,
+.tv-dashboard__epg-bar::-webkit-scrollbar,
+.tv-dashboard__home-rows-container::-webkit-scrollbar {
+  display: none;
+}
+
+.tv-dashboard__list-item,
+.tv-dashboard__epg-guide-item {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.tv-dashboard__home-card-poster,
+.tv-dashboard__epg-bar-item,
+.tv-dashboard__search-input {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tv-dashboard__panel-hint--channel,
+.tv-dashboard__channel-name,
+.tv-dashboard__program-name,
+.tv-dashboard__epg-guide-title,
+.tv-dashboard__epg-bar-title,
+.tv-dashboard__home-card-title,
+.tv-dashboard__home-card-subtitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .tv-dashboard__panel {
@@ -230,11 +282,6 @@
   letter-spacing: 0.02em;
 }
 
-.tv-dashboard__panel-hint {
-  font-size: 0.78rem;
-  color: rgba(222, 240, 255, 0.74);
-}
-
 .tv-dashboard__list-container {
   position: relative;
   flex: 1;
@@ -248,14 +295,9 @@
   padding: 0.3rem 0.4rem;
   overflow: auto;
   list-style: none;
-  scrollbar-width: none;
   scroll-behavior: smooth;
   scroll-padding-block: 2rem;
   box-sizing: border-box;
-}
-
-.tv-dashboard__list::-webkit-scrollbar {
-  display: none;
 }
 
 .tv-dashboard__list-item {
@@ -268,7 +310,6 @@
   padding: 0.5rem 0.65rem;
   border-radius: 0.7rem;
   color: rgba(230, 244, 255, 0.82);
-  background: rgba(255, 255, 255, 0.03);
 }
 
 .tv-dashboard__list-item--focused {
@@ -347,18 +388,12 @@
   margin: 0;
   font-size: 1.1rem;
   letter-spacing: 0.01em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .tv-dashboard__program-name {
   margin: 0.2rem 0 0;
   font-size: 0.88rem;
   color: rgba(212, 234, 255, 0.82);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .tv-dashboard__program-progress-track {
@@ -388,9 +423,6 @@
 
 .tv-dashboard__panel-hint--channel {
   max-width: 12rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .tv-dashboard__epg-guide-list {
@@ -399,11 +431,6 @@
   padding: 0;
   overflow: auto;
   list-style: none;
-  scrollbar-width: none;
-}
-
-.tv-dashboard__epg-guide-list::-webkit-scrollbar {
-  display: none;
 }
 
 .tv-dashboard__epg-guide-item {
@@ -414,7 +441,6 @@
   padding: 0.55rem 0.5rem;
   border-radius: 0.6rem;
   margin-bottom: 0.3rem;
-  background: rgba(255, 255, 255, 0.03);
   color: rgba(220, 240, 255, 0.75);
 }
 
@@ -439,9 +465,6 @@
 .tv-dashboard__epg-guide-title {
   margin: 0;
   font-size: 0.9rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .tv-dashboard__epg-guide-item--now-playing .tv-dashboard__epg-guide-title {
@@ -523,12 +546,7 @@
   gap: 0.5rem;
   margin-top: 0.75rem;
   overflow-x: auto;
-  scrollbar-width: none;
   scroll-behavior: smooth;
-}
-
-.tv-dashboard__epg-bar::-webkit-scrollbar {
-  display: none;
 }
 
 .tv-dashboard__epg-bar-item {
@@ -541,7 +559,6 @@
   padding: 0.45rem 0.65rem;
   border-radius: 0.55rem;
   border: 1px solid rgba(173, 226, 255, 0.15);
-  background: rgba(255, 255, 255, 0.05);
 }
 
 .tv-dashboard__epg-bar-item--now-playing {
@@ -570,9 +587,6 @@
   font-size: 0.92rem;
   font-weight: 400;
   color: rgba(207, 232, 255, 0.9);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .tv-dashboard__toast {
@@ -622,12 +636,7 @@
       flex: 1;
       min-height: 0;
       overflow-y: auto;
-      scrollbar-width: none;
       padding-right: 0.25rem;
-
-      &::-webkit-scrollbar {
-        display: none;
-      }
     }
 
     &-row {
@@ -683,7 +692,6 @@
       &-poster {
         width: 100%;
         aspect-ratio: 16/9;
-        background: rgba(255, 255, 255, 0.05);
         border: 2px solid transparent;
         border-radius: 0.5rem;
         display: flex;
@@ -744,18 +752,12 @@
         margin: 0;
         font-size: 0.95rem;
         font-weight: 600;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
       }
 
       &-subtitle {
         margin: 0;
         font-size: 0.8rem;
         color: rgba(255, 255, 255, 0.5);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
       }
 
       &--event {
@@ -823,7 +825,6 @@
   padding: 0.75rem 1rem;
   border-radius: 0.7rem;
   border: 1px solid rgba(173, 226, 255, 0.15);
-  background: rgba(255, 255, 255, 0.05);
   color: #fff;
   font-size: 1.05rem;
   font-family: inherit;
@@ -881,218 +882,4 @@
     grid-column: 1 / -1;
     min-height: 18rem;
   }
-}
-
-/* Settings Panel & Account Info */
-.tv-dashboard__settings-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  padding: 1rem 0;
-}
-
-.tv-dashboard__settings-card {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(133, 222, 255, 0.15);
-  border-radius: 1rem;
-  padding: 1.5rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-}
-
-.tv-dashboard__settings-card-title {
-  margin: 0 0 1rem;
-  font-size: 1.1rem;
-  color: #cce8ff;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-.tv-dashboard__settings-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-
-  li {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-bottom: 0.6rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-
-    &:last-child {
-      border-bottom: none;
-      padding-bottom: 0;
-    }
-  }
-}
-
-.tv-dashboard__settings-label {
-  color: rgba(230, 245, 255, 0.7);
-  font-size: 0.95rem;
-}
-
-.tv-dashboard__settings-value {
-  color: white;
-  font-weight: 500;
-}
-
-.tv-dashboard__settings-selector {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem 1rem;
-  border-radius: 0.5rem;
-  background: rgba(255, 255, 255, 0.05);
-  margin-bottom: 0.5rem;
-  transition: all 0.2s ease;
-
-  &--focused {
-    background: white;
-    color: black;
-    transform: scale(1.02);
-
-    .tv-dashboard__settings-label,
-    .tv-dashboard__settings-value--select {
-       color: black;
-    }
-  }
-}
-
-.tv-dashboard__settings-control {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.tv-dashboard__settings-value--select {
-   font-weight: 600;
-   color: white;
-   width: 120px;
-   text-align: center;
-}
-
-.tv-dashboard__settings-hint {
-   font-size: 0.85rem;
-   color: rgba(255, 255, 255, 0.5);
-   margin-bottom: 1.5rem;
-   font-style: italic;
-}
-
-.tv-dashboard__settings-action-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  padding: 1rem 2rem;
-  border-radius: 0.8rem;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #fff;
-  background: rgba(255, 59, 48, 0.2);
-  border: 1px solid rgba(255, 59, 48, 0.4);
-  cursor: pointer;
-  outline: none;
-  transition: all 150ms ease;
-  max-width: 18rem;
-}
-
-.tv-dashboard__settings-action-btn--focused {
-  background: rgba(255, 59, 48, 0.8);
-  border-color: #ff3b30;
-  box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.4), 0 0 20px rgba(255, 59, 48, 0.3);
-  transform: scale(1.02);
-}
-
-/* Logout Dialog Overlay */
-.tv-dashboard__dialog-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 100;
-  display: grid;
-  place-items: center;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(10px);
-  animation: dialog-fade-in 200ms ease;
-}
-
-@keyframes dialog-fade-in {
-  from {
-    opacity: 0;
-    backdrop-filter: blur(0);
-  }
-
-  to {
-    opacity: 1;
-    backdrop-filter: blur(10px);
-  }
-}
-
-.tv-dashboard__dialog {
-  background: rgba(12, 22, 40, 0.9);
-  border: 1px solid rgba(133, 222, 255, 0.2);
-  border-radius: 1.25rem;
-  padding: 2rem 2.5rem;
-  width: 90%;
-  max-width: 26rem;
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  text-align: center;
-  animation: dialog-slide-up 250ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-@keyframes dialog-slide-up {
-  from {
-    opacity: 0;
-    transform: translateY(20px) scale(0.95);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.tv-dashboard__dialog-title {
-  margin: 0 0 0.75rem;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #fff;
-}
-
-.tv-dashboard__dialog-desc {
-  margin: 0 0 2rem;
-  font-size: 1rem;
-  color: rgba(220, 240, 255, 0.8);
-  line-height: 1.4;
-}
-
-.tv-dashboard__dialog-actions {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-}
-
-.tv-dashboard__dialog-btn {
-  flex: 1;
-  padding: 0.85rem 1rem;
-  border-radius: 0.7rem;
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: #fff;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  outline: none;
-  transition: all 150ms ease;
-}
-
-.tv-dashboard__dialog-btn--focused {
-  background: linear-gradient(135deg, rgba(0, 150, 255, 0.7), rgba(0, 208, 255, 0.5));
-  border-color: #8adbff;
-  box-shadow: 0 0 0 3px rgba(138, 219, 255, 0.6), 0 0 18px rgba(0, 170, 255, 0.4);
-  transform: translateY(-2px);
 }

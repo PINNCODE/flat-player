@@ -1,0 +1,124 @@
+.tv-dashboard__settings-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1rem 0;
+}
+
+.tv-dashboard__settings-card {
+  padding: 1.5rem;
+  border: 1px solid rgba(133, 222, 255, 0.15);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.tv-dashboard__settings-card-title {
+  margin: 0 0 1rem;
+  color: #cce8ff;
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.tv-dashboard__settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  li:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+}
+
+.tv-dashboard__settings-label {
+  color: rgba(230, 245, 255, 0.7);
+  font-size: 0.95rem;
+}
+
+.tv-dashboard__settings-value {
+  color: #fff;
+  font-weight: 500;
+}
+
+.tv-dashboard__settings-selector {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease;
+}
+
+.tv-dashboard__settings-selector--focused {
+  color: #000;
+  background: #fff;
+  transform: scale(1.02);
+}
+
+.tv-dashboard__settings-selector--focused .tv-dashboard__settings-label,
+.tv-dashboard__settings-selector--focused .tv-dashboard__settings-value--select {
+  color: #000;
+}
+
+.tv-dashboard__settings-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tv-dashboard__settings-value--select {
+  width: 120px;
+  color: #fff;
+  font-weight: 600;
+  text-align: center;
+}
+
+.tv-dashboard__settings-hint {
+  margin-bottom: 1.5rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.tv-dashboard__settings-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  max-width: 18rem;
+  padding: 1rem 2rem;
+  border: 1px solid rgba(255, 59, 48, 0.4);
+  border-radius: 0.8rem;
+  outline: none;
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 600;
+  background: rgba(255, 59, 48, 0.2);
+  transition: all 150ms ease;
+}
+
+.tv-dashboard__settings-action-btn--focused {
+  border-color: #ff3b30;
+  background: rgba(255, 59, 48, 0.8);
+  box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.4), 0 0 20px rgba(255, 59, 48, 0.3);
+  transform: scale(1.02);
+}
+
+.tv-dashboard__settings-action-text {
+  margin-left: 0.5rem;
+}

@@ -1,0 +1,15 @@
+<div class="tv-dashboard__dialog-overlay" aria-hidden="true">
+  <div class="tv-dashboard__dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title">
+    <h2 id="dialog-title" class="tv-dashboard__dialog-title">¿Cerrar sesión?</h2>
+    <p class="tv-dashboard__dialog-desc">Tu información se eliminará y volverás al inicio de sesión.</p>
+
+    <div class="tv-dashboard__dialog-actions">
+      <button type="button" class="tv-dashboard__dialog-btn" [class.tv-dashboard__dialog-btn--focused]="focusedActionIndex() === 0">
+        Continuar
+      </button>
+      <button type="button" class="tv-dashboard__dialog-btn" [class.tv-dashboard__dialog-btn--focused]="focusedActionIndex() === 1">
+        Cancelar
+      </button>
+    </div>
+  </div>
+</div>

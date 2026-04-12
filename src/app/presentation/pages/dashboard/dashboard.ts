@@ -19,6 +19,8 @@ import { GetHomeRecommendationsUseCase } from '@core/application/usecases/get-ho
 import { HomeRecommendations } from '@core/domain/models/home-recommendations.model';
 import { VideoPlaybackFacade } from '../../services/video-playback.facade';
 import { environment } from '../../../../environments/environment';
+import { DashboardLogoutDialog } from './dashboard-logout-dialog';
+import { DashboardSettingsPanel } from './dashboard-settings-panel';
 
 type OverlayPanel = 'home' | 'menu' | 'categories' | 'channels' | 'search' | 'settings';
 type OverlayTrigger = 'dpad' | 'ok';
@@ -30,7 +32,7 @@ interface MenuItem {
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule],
+  imports: [CommonModule, DashboardSettingsPanel, DashboardLogoutDialog],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',

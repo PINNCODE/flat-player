@@ -1,0 +1,43 @@
+<section class="tv-dashboard__panel tv-dashboard__panel--settings" aria-label="Ajustes">
+  <header class="tv-dashboard__panel-header">
+    <h2 class="tv-dashboard__panel-title">Ajustes</h2>
+  </header>
+
+  <div class="tv-dashboard__settings-content">
+    @if (userInfo(); as account) {
+    <div class="tv-dashboard__settings-card">
+      <h3 class="tv-dashboard__settings-card-title">Información de la Cuenta</h3>
+      <ul class="tv-dashboard__settings-list">
+        <li><span class="tv-dashboard__settings-label">Usuario</span> <span class="tv-dashboard__settings-value">{{ account.username }}</span></li>
+        <li><span class="tv-dashboard__settings-label">Estado</span> <span class="tv-dashboard__settings-value">{{ account.status }}</span></li>
+        <li><span class="tv-dashboard__settings-label">Tipo</span> <span class="tv-dashboard__settings-value">{{ account.is_trial === '1' ? 'Prueba' : 'Premium' }}</span></li>
+        <li><span class="tv-dashboard__settings-label">Conexiones</span> <span class="tv-dashboard__settings-value">{{ account.active_cons }} / {{ account.max_connections }}</span></li>
+        <li><span class="tv-dashboard__settings-label">Creada</span> <span class="tv-dashboard__settings-value">{{ createdAtLabel() }}</span></li>
+        <li><span class="tv-dashboard__settings-label">Expira</span> <span class="tv-dashboard__settings-value">{{ expiresAtLabel() }}</span></li>
+      </ul>
+    </div>
+    }
+
+    <div class="tv-dashboard__settings-card">
+      <h3 class="tv-dashboard__settings-card-title">Región y Contenido</h3>
+      <div class="tv-dashboard__settings-selector" [class.tv-dashboard__settings-selector--focused]="settingsFocusedIndex() === 0">
+        <span class="tv-dashboard__settings-label">País de Residencia</span>
+        <div class="tv-dashboard__settings-control">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          <span class="tv-dashboard__settings-value--select">{{ selectedCountryLabel() }}</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </div>
+      </div>
+      <p class="tv-dashboard__settings-hint">Las recomendaciones de Inicio se adaptarán al país que elijas.</p>
+    </div>
+
+    <button type="button" class="tv-dashboard__settings-action-btn" [class.tv-dashboard__settings-action-btn--focused]="settingsFocusedIndex() === 1">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+        <polyline points="16 17 21 12 16 7" />
+        <line x1="21" y1="12" x2="9" y2="12" />
+      </svg>
+      <span class="tv-dashboard__settings-action-text">Cerrar sesión</span>
+    </button>
+  </div>
+</section>
