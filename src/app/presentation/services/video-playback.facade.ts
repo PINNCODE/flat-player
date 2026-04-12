@@ -147,14 +147,24 @@ export class VideoPlaybackFacade {
     this.hls = new Hls({
       enableWorker: true,
       lowLatencyMode: false,
-      // liveSyncDurationCount: 3 = punto medio óptimo.
-      // Con fragmentos de ~10s → liveSyncDuration efectiva ≈ 30s (coincide con objetivo).
-      // liveMaxLatencyDurationCount: 10 → tolerancia máxima ≈ 100s antes de resync interno.
-      liveSyncDurationCount: 3,
-      liveMaxLatencyDurationCount: 10,
-      // Buffer generoso para absorber variaciones de red entre fragmentos largos.
-      maxBufferLength: 30,
-      backBufferLength: 10,
+
+      // ── Sincronización (familia *Duration — NO mezclar con *Count) ────
+      // hls.js lanza error si se combinan ambas familias.
+      // liveSyncDuration: distancia objetivo al live edge en segundos.
+      // Seteado en 7s para estar lo más cerca posible del vivo en deportes.
+      liveSyncDuration: 7,
+      // Latencia máxima tolerable; si se supera los 15s, hls.js fuerza resync.
+      liveMaxLatencyDuration: 15,
+ 
+      // ── Aceleración automática ────────────────────────────────────────
+      // hls.js sube el playbackRate hasta 1.25x para recuperar latencia rápido.
+      maxLiveSyncPlaybackRate: 1.25,
+
+      // ── Gestión de buffer ─────────────────────────────────────────────
+      maxBufferLength: 15,
+      maxMaxBufferLength: 20,
+      // 0 = hls.js libera el video ya reproducido → menos RAM en Tizen.
+      backBufferLength: 0,
     });
     this.hls.loadSource(sourceUrl);
     this.hls.attachMedia(videoElement);
@@ -173,14 +183,39 @@ export class VideoPlaybackFacade {
 
     this.hls.on(Events.ERROR, (_, data: ErrorData) => {
       if (data.details === 'bufferStalledError') {
-        // Manejo proactivo de stalling en Tizen:
-        // 1. Marcar buffering activo para que el util frene a 1.0x inmediatamente.
-        // 2. Activar isStalledRecovery: el util exigirá buffer >= 8s antes de
-        //    permitir catch-up de nuevo.
-        // 3. NO hacemos seek hacia atrás: dejar que hls.js llene el buffer.
         this.isBuffering = true;
         this.isStalledRecovery = true;
+        // Freno inmediato: cancelar cualquier aceleración activa.
         this.applyPlaybackRate(videoElement, 1);
+
+        // Resiliencia: seek de 2s hacia atrás para recuperar el flujo de datos.
+        // Un pequeño retroceso reactiva la descarga de segmentos en hls.js.
+        if (
+          !this.isSeekInProgress &&
+          !videoElement.paused &&
+          Number.isFinite(videoElement.currentTime) &&
+          videoElement.currentTime > 2
+        ) {
+          const rewindTarget = Math.max(0, videoElement.currentTime - 2);
+          this.isSeekInProgress = true;
+          videoElement.currentTime = rewindTarget;
+
+          const onStalledSeeked = () => {
+            this.isSeekInProgress = false;
+            videoElement.removeEventListener('seeked', onStalledSeeked);
+            if (this.seekGuardTimeout) {
+              clearTimeout(this.seekGuardTimeout);
+              this.seekGuardTimeout = null;
+            }
+          };
+          videoElement.addEventListener('seeked', onStalledSeeked, { once: true });
+
+          // Guard para Tizen: el evento 'seeked' puede no dispararse.
+          this.seekGuardTimeout = setTimeout(() => {
+            this.isSeekInProgress = false;
+            this.seekGuardTimeout = null;
+          }, 2000);
+        }
       }
 
       if (!data.fatal) {
@@ -364,7 +399,7 @@ export class VideoPlaybackFacade {
     const liveEdge = this.getLiveEdge(videoElement, currentTime, bufferAhead);
     const latency = Number.isFinite(liveEdge) ? Math.max(0, liveEdge - currentTime) : 0;
 
-    // Actualizar signals de debug (el effect() del dashboard filtrará los cambios pequeños).
+    // Actualizar signals de debug (el effect() del dashboard filtra cambios pequeños).
     this.liveEdgeSeconds.set(liveEdge);
     this.currentTimeSeconds.set(currentTime);
     this.latencySeconds.set(latency);
@@ -379,12 +414,10 @@ export class VideoPlaybackFacade {
     }
 
     if (!Number.isFinite(liveEdge)) {
-      this.applyPlaybackRate(videoElement, 1);
       return;
     }
 
-    if (bufferAhead < VideoPlaybackFacade.MIN_BUFFER_AHEAD_SECONDS || videoElement.readyState < 2) {
-      this.applyPlaybackRate(videoElement, 1);
+    if (videoElement.readyState < 2) {
       return;
     }
 
@@ -399,15 +432,35 @@ export class VideoPlaybackFacade {
       nowMs: Date.now(),
     });
 
-    this.applyPlaybackRate(videoElement, decision.playbackRate);
+    switch (decision.action) {
+      case 'catch-up':
+        // Soft catch-up explícito: buffer sano, latencia por encima del objetivo.
+        // Se fija en 1.1x — puede convivir con maxLiveSyncPlaybackRate (1.15x)
+        // ya que ambos empujan en la misma dirección.
+        this.applyPlaybackRate(videoElement, LiveLatencySyncUtil.CATCHUP_RATE);
+        break;
 
-    if (decision.action === 'seek' && decision.targetTime !== null) {
-      this.forceSeek(videoElement, decision.targetTime, currentTime);
-      return;
-    }
+      case 'brake':
+        // Freno de emergencia: anula la aceleración de hls.js.
+        // hls.js recuperará el control cuando el buffer suba.
+        this.applyPlaybackRate(videoElement, 1);
+        break;
 
-    if (decision.action === 'resync') {
-      this.resyncManifest();
+      case 'seek':
+        if (decision.targetTime !== null) {
+          this.applyPlaybackRate(videoElement, 1);
+          this.forceSeek(videoElement, decision.targetTime, currentTime);
+        }
+        break;
+
+      case 'resync':
+        this.resyncManifest();
+        break;
+
+      case 'none':
+        // hls.js gestiona la tasa con maxLiveSyncPlaybackRate: 1.15.
+        // No interferir.
+        break;
     }
   }
 
