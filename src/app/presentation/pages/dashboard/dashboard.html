@@ -2,6 +2,16 @@
   <div class="tv-dashboard__video-layer" aria-label="Video en vivo" (click)="onVideoLayerClick()">
     <video #videoPlayer class="tv-dashboard__video-player" autoplay playsinline></video>
     <div class="tv-dashboard__video-glow" [class.tv-dashboard__video-glow--visible]="videoMetaVisible()"></div>
+    @if (debugMode()) {
+    <div class="tv-dashboard__debug-overlay" aria-label="Debug de reproduccion en vivo">
+      <p class="tv-dashboard__debug-title">DEBUG LIVE</p>
+      <p class="tv-dashboard__debug-row">Live edge: {{ debugLiveEdge().toFixed(2) }}s</p>
+      <p class="tv-dashboard__debug-row">Current: {{ debugCurrentTime().toFixed(2) }}s</p>
+      <p class="tv-dashboard__debug-row">Latencia: {{ debugLatency().toFixed(2) }}s</p>
+      <p class="tv-dashboard__debug-row">Buffer: {{ debugBufferAhead().toFixed(2) }}s</p>
+      <p class="tv-dashboard__debug-hint">Toggle debug: tecla 0</p>
+    </div>
+    }
     @if (videoMetaVisible()) {
     <div class="tv-dashboard__video-meta">
       <p class="tv-dashboard__video-status">LIVE</p>

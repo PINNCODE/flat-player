@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, QueryList, ViewChild, ViewChildren, computed, inject, signal, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, QueryList, ViewChild, ViewChildren, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { ChangeChannelUseCase, ChannelSelection } from '@core/application/usecases/change-channel.usecase';
 import { GetTvCatalogUseCase } from '@core/application/usecases/get-tv-catalog.usecase';
 import { LogoutUseCase } from '@core/application/usecases/logout.usecase';
@@ -90,6 +90,20 @@ export class Dashboard implements AfterViewInit {
   protected readonly videoMetaVisible = signal(false);
   protected readonly toastMessage = signal('');
   protected readonly streamPlaybackError = signal('');
+  protected readonly debugMode = signal(false);
+
+  // Señales de display del debug — solo se actualizan cuando el cambio supera
+  // el umbral de significancia (0.5s) para no saturar el render del Smart TV.
+  protected readonly debugLiveEdge = signal(0);
+  protected readonly debugCurrentTime = signal(0);
+  protected readonly debugLatency = signal(0);
+  protected readonly debugBufferAhead = signal(0);
+
+  // Valores raw del facade usados por el effect() para detección de cambios.
+  private readonly rawLiveEdge = computed(() => this.videoPlaybackFacade.liveEdgeSeconds());
+  private readonly rawCurrentTime = computed(() => this.videoPlaybackFacade.currentTimeSeconds());
+  private readonly rawLatency = computed(() => this.videoPlaybackFacade.latencySeconds());
+  private readonly rawBufferAhead = computed(() => this.videoPlaybackFacade.bufferAheadSeconds());
 
   protected readonly focusedCategory = computed(
     () => this.categories()[this.focusedCategoryIndex()] ?? null,
@@ -173,6 +187,30 @@ export class Dashboard implements AfterViewInit {
       this.clearVideoMetaTimeout();
       this.videoPlaybackFacade.destroy();
     });
+
+    // Effect throttleado: actualiza los signals de debug solo cuando los valores
+    // cambian más de 0.5s. Esto evita saturar el motor de CD del Smart TV.
+    const DEBUG_THRESHOLD = 0.5;
+    effect(() => {
+      const newLiveEdge = this.rawLiveEdge();
+      const newCurrentTime = this.rawCurrentTime();
+      const newLatency = this.rawLatency();
+      const newBufferAhead = this.rawBufferAhead();
+
+      if (Math.abs(newLiveEdge - this.debugLiveEdge()) > DEBUG_THRESHOLD) {
+        this.debugLiveEdge.set(newLiveEdge);
+      }
+      if (Math.abs(newCurrentTime - this.debugCurrentTime()) > DEBUG_THRESHOLD) {
+        this.debugCurrentTime.set(newCurrentTime);
+      }
+      if (Math.abs(newLatency - this.debugLatency()) > DEBUG_THRESHOLD) {
+        this.debugLatency.set(newLatency);
+      }
+      if (Math.abs(newBufferAhead - this.debugBufferAhead()) > DEBUG_THRESHOLD) {
+        this.debugBufferAhead.set(newBufferAhead);
+      }
+    });
+
     void this.loadCatalog();
   }
 
@@ -187,6 +225,12 @@ export class Dashboard implements AfterViewInit {
   }
 
   onRemoteKeydown(event: KeyboardEvent): void {
+    if (event.key === '0' || event.key === 'Digit0' || event.key === 'Numpad0') {
+      event.preventDefault();
+      this.debugMode.update((enabled) => !enabled);
+      return;
+    }
+
     const action = this.resolveRemoteAction(event.key);
 
     if (!action) {

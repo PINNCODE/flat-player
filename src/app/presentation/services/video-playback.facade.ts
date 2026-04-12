@@ -1,16 +1,40 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import Hls, { ErrorData, Events } from 'hls.js';
+import { LiveLatencySyncUtil } from './live-latency-sync.util';
 
 type PlaybackErrorHandler = (message: string, usedFallback: boolean) => void;
 
 @Injectable({ providedIn: 'root' })
 export class VideoPlaybackFacade {
+  private static readonly MONITOR_INTERVAL_MS = 5000;
+  private static readonly MIN_BUFFER_AHEAD_SECONDS = 0.5;
+  private static readonly BACK_BUFFER_FLUSH_INTERVAL_MS = 20000;
+  /** Buffer mínimo para salir del modo de recuperación post-stall. */
+  private static readonly STALL_RECOVERY_BUFFER_SECONDS = 8;
+
   private hls: Hls | null = null;
   private nativeErrorHandler: ((event: Event) => void) | null = null;
   private nativeStalledHandler: ((event: Event) => void) | null = null;
   private nativeLoadedDataHandler: ((event: Event) => void) | null = null;
   private nativeErrorTimer: ReturnType<typeof setTimeout> | null = null;
   private nativeVideoElement: HTMLVideoElement | null = null;
+  private latencyMonitorTimer: ReturnType<typeof setInterval> | null = null;
+  private seekGuardTimeout: ReturnType<typeof setTimeout> | null = null;
+  private isSeekInProgress = false;
+  private isBuffering = false;
+  /** true tras un bufferStalledError; se limpia cuando el buffer recupera >= 8s. */
+  private isStalledRecovery = false;
+  private monitorVideoElement: HTMLVideoElement | null = null;
+  private monitorWaitingHandler: ((event: Event) => void) | null = null;
+  private monitorPlayingHandler: ((event: Event) => void) | null = null;
+  private monitorCanPlayHandler: ((event: Event) => void) | null = null;
+  private lastBackBufferFlushAt = 0;
+  private readonly liveLatencySyncUtil = new LiveLatencySyncUtil();
+
+  readonly liveEdgeSeconds = signal(0);
+  readonly currentTimeSeconds = signal(0);
+  readonly latencySeconds = signal(0);
+  readonly bufferAheadSeconds = signal(0);
 
   start(
     videoElement: HTMLVideoElement,
@@ -20,10 +44,12 @@ export class VideoPlaybackFacade {
   ): void {
     this.destroy();
     this.attachSource(videoElement, primaryUrl, fallbackUrl, onError, false);
+    this.startLatencyMonitoring(videoElement);
   }
 
   destroy(): void {
     this.teardownNativeListeners();
+    this.stopLatencyMonitoring();
 
     if (this.hls) {
       this.hls.destroy();
@@ -121,12 +147,42 @@ export class VideoPlaybackFacade {
     this.hls = new Hls({
       enableWorker: true,
       lowLatencyMode: false,
+      // liveSyncDurationCount: 3 = punto medio óptimo.
+      // Con fragmentos de ~10s → liveSyncDuration efectiva ≈ 30s (coincide con objetivo).
+      // liveMaxLatencyDurationCount: 10 → tolerancia máxima ≈ 100s antes de resync interno.
       liveSyncDurationCount: 3,
+      liveMaxLatencyDurationCount: 10,
+      // Buffer generoso para absorber variaciones de red entre fragmentos largos.
       maxBufferLength: 30,
+      backBufferLength: 10,
     });
     this.hls.loadSource(sourceUrl);
     this.hls.attachMedia(videoElement);
+
+    this.hls.on(Events.LEVEL_UPDATED, () => {
+      this.isBuffering = false;
+      this.syncToLiveEdge(videoElement);
+    });
+
+    this.hls.on(Events.FRAG_BUFFERED, () => {
+      // Trigger de catch-up event-driven: se evalúa la lógica cada vez que
+      // llega un fragmento (óptimo para fragmentos largos de ~10s).
+      this.syncToLiveEdge(videoElement);
+      this.flushOldBuffer(videoElement);
+    });
+
     this.hls.on(Events.ERROR, (_, data: ErrorData) => {
+      if (data.details === 'bufferStalledError') {
+        // Manejo proactivo de stalling en Tizen:
+        // 1. Marcar buffering activo para que el util frene a 1.0x inmediatamente.
+        // 2. Activar isStalledRecovery: el util exigirá buffer >= 8s antes de
+        //    permitir catch-up de nuevo.
+        // 3. NO hacemos seek hacia atrás: dejar que hls.js llene el buffer.
+        this.isBuffering = true;
+        this.isStalledRecovery = true;
+        this.applyPlaybackRate(videoElement, 1);
+      }
+
       if (!data.fatal) {
         return;
       }
@@ -236,5 +292,246 @@ export class VideoPlaybackFacade {
 
     clearTimeout(this.nativeErrorTimer);
     this.nativeErrorTimer = null;
+  }
+
+  private startLatencyMonitoring(videoElement: HTMLVideoElement): void {
+    this.stopLatencyMonitoring();
+    this.monitorVideoElement = videoElement;
+
+    this.monitorWaitingHandler = () => {
+      this.isBuffering = true;
+    };
+
+    this.monitorPlayingHandler = () => {
+      this.isBuffering = false;
+    };
+
+    this.monitorCanPlayHandler = () => {
+      this.isBuffering = false;
+    };
+
+    videoElement.addEventListener('waiting', this.monitorWaitingHandler);
+    videoElement.addEventListener('playing', this.monitorPlayingHandler);
+    videoElement.addEventListener('canplay', this.monitorCanPlayHandler);
+
+    // Primer muestreo inmediato para no mostrar valores en cero al abrir debug.
+    this.syncToLiveEdge(videoElement);
+
+    this.latencyMonitorTimer = setInterval(() => {
+      this.syncToLiveEdge(videoElement);
+    }, VideoPlaybackFacade.MONITOR_INTERVAL_MS);
+  }
+
+  private stopLatencyMonitoring(): void {
+    if (this.latencyMonitorTimer) {
+      clearInterval(this.latencyMonitorTimer);
+      this.latencyMonitorTimer = null;
+    }
+
+    if (this.seekGuardTimeout) {
+      clearTimeout(this.seekGuardTimeout);
+      this.seekGuardTimeout = null;
+    }
+
+    if (this.monitorVideoElement) {
+      if (this.monitorWaitingHandler) {
+        this.monitorVideoElement.removeEventListener('waiting', this.monitorWaitingHandler);
+      }
+
+      if (this.monitorPlayingHandler) {
+        this.monitorVideoElement.removeEventListener('playing', this.monitorPlayingHandler);
+      }
+
+      if (this.monitorCanPlayHandler) {
+        this.monitorVideoElement.removeEventListener('canplay', this.monitorCanPlayHandler);
+      }
+
+      this.monitorVideoElement = null;
+    }
+
+    this.monitorWaitingHandler = null;
+    this.monitorPlayingHandler = null;
+    this.monitorCanPlayHandler = null;
+    this.isBuffering = false;
+    this.isSeekInProgress = false;
+    this.isStalledRecovery = false;
+    this.lastBackBufferFlushAt = 0;
+  }
+
+  private syncToLiveEdge(videoElement: HTMLVideoElement): void {
+    const currentTime = Number.isFinite(videoElement.currentTime) ? videoElement.currentTime : 0;
+    const bufferAhead = this.getBufferAhead(videoElement, currentTime);
+    const liveEdge = this.getLiveEdge(videoElement, currentTime, bufferAhead);
+    const latency = Number.isFinite(liveEdge) ? Math.max(0, liveEdge - currentTime) : 0;
+
+    // Actualizar signals de debug (el effect() del dashboard filtrará los cambios pequeños).
+    this.liveEdgeSeconds.set(liveEdge);
+    this.currentTimeSeconds.set(currentTime);
+    this.latencySeconds.set(latency);
+    this.bufferAheadSeconds.set(bufferAhead);
+
+    // Limpiar isStalledRecovery en cuanto el buffer supere el umbral de recuperación.
+    if (
+      this.isStalledRecovery &&
+      bufferAhead >= VideoPlaybackFacade.STALL_RECOVERY_BUFFER_SECONDS
+    ) {
+      this.isStalledRecovery = false;
+    }
+
+    if (!Number.isFinite(liveEdge)) {
+      this.applyPlaybackRate(videoElement, 1);
+      return;
+    }
+
+    if (bufferAhead < VideoPlaybackFacade.MIN_BUFFER_AHEAD_SECONDS || videoElement.readyState < 2) {
+      this.applyPlaybackRate(videoElement, 1);
+      return;
+    }
+
+    const decision = this.liveLatencySyncUtil.evaluate({
+      currentTime,
+      liveEdge,
+      liveSyncPosition: this.getLiveSyncPosition(),
+      bufferAhead,
+      paused: videoElement.paused,
+      buffering: this.isBuffering,
+      stalledRecovery: this.isStalledRecovery,
+      nowMs: Date.now(),
+    });
+
+    this.applyPlaybackRate(videoElement, decision.playbackRate);
+
+    if (decision.action === 'seek' && decision.targetTime !== null) {
+      this.forceSeek(videoElement, decision.targetTime, currentTime);
+      return;
+    }
+
+    if (decision.action === 'resync') {
+      this.resyncManifest();
+    }
+  }
+
+  private forceSeek(
+    videoElement: HTMLVideoElement,
+    targetTime: number,
+    currentTime: number,
+  ): void {
+    if (this.isSeekInProgress || videoElement.paused || this.isBuffering) {
+      return;
+    }
+
+    if (Math.abs(targetTime - currentTime) < 0.5) {
+      return;
+    }
+
+    this.isSeekInProgress = true;
+    videoElement.currentTime = targetTime;
+
+    const onSeeked = () => {
+      this.isSeekInProgress = false;
+      videoElement.removeEventListener('seeked', onSeeked);
+
+      if (this.seekGuardTimeout) {
+        clearTimeout(this.seekGuardTimeout);
+        this.seekGuardTimeout = null;
+      }
+    };
+
+    videoElement.addEventListener('seeked', onSeeked, { once: true });
+
+    this.seekGuardTimeout = setTimeout(() => {
+      this.isSeekInProgress = false;
+      this.seekGuardTimeout = null;
+    }, 1500);
+  }
+
+  private resyncManifest(): void {
+    if (!this.hls) {
+      return;
+    }
+
+    this.hls.stopLoad();
+    this.hls.startLoad(-1, true);
+  }
+
+  private flushOldBuffer(videoElement: HTMLVideoElement): void {
+    if (!this.hls) {
+      return;
+    }
+
+    const nowMs = Date.now();
+    if (nowMs - this.lastBackBufferFlushAt < VideoPlaybackFacade.BACK_BUFFER_FLUSH_INTERVAL_MS) {
+      return;
+    }
+
+    const flushEnd = this.liveLatencySyncUtil.getBackBufferFlushEnd(videoElement.currentTime);
+    if (flushEnd <= 0) {
+      return;
+    }
+
+    this.hls.trigger(Events.BUFFER_FLUSHING, {
+      startOffset: 0,
+      endOffset: flushEnd,
+      type: null,
+    });
+    this.lastBackBufferFlushAt = nowMs;
+  }
+
+  private getLiveSyncPosition(): number | null {
+    const liveSyncPosition = this.hls?.liveSyncPosition;
+    if (liveSyncPosition === null || liveSyncPosition === undefined || !Number.isFinite(liveSyncPosition)) {
+      return null;
+    }
+
+    return liveSyncPosition;
+  }
+
+  private applyPlaybackRate(videoElement: HTMLVideoElement, rate: number): void {
+    if (videoElement.playbackRate === rate) {
+      return;
+    }
+
+    videoElement.playbackRate = rate;
+  }
+
+  private getLiveEdge(
+    videoElement: HTMLVideoElement,
+    currentTime: number,
+    bufferAhead: number,
+  ): number {
+    if (videoElement.seekable.length > 0) {
+      return videoElement.seekable.end(videoElement.seekable.length - 1);
+    }
+
+    if (this.hls?.liveSyncPosition !== null && this.hls?.liveSyncPosition !== undefined) {
+      return this.hls.liveSyncPosition;
+    }
+
+    if (videoElement.buffered.length > 0) {
+      return videoElement.buffered.end(videoElement.buffered.length - 1);
+    }
+
+    if (bufferAhead > 0) {
+      return currentTime + bufferAhead;
+    }
+
+    return Number.isFinite(videoElement.duration) ? videoElement.duration : currentTime;
+  }
+
+  private getBufferAhead(videoElement: HTMLVideoElement, currentTime: number): number {
+    if (videoElement.buffered.length === 0) {
+      return 0;
+    }
+
+    for (let index = 0; index < videoElement.buffered.length; index += 1) {
+      const start = videoElement.buffered.start(index);
+      const end = videoElement.buffered.end(index);
+      if (currentTime >= start && currentTime <= end) {
+        return Math.max(0, end - currentTime);
+      }
+    }
+
+    const lastEnd = videoElement.buffered.end(videoElement.buffered.length - 1);
+    return Math.max(0, lastEnd - currentTime);
   }
 }
