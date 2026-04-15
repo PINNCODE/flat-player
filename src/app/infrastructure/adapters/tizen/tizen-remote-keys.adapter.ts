@@ -15,6 +15,8 @@ export class TizenRemoteKeysAdapter {
       tizenApi.tvinputdevice.registerKey('XF86Back');
       tizenApi.tvinputdevice.registerKey('MediaPlayPause');
       tizenApi.tvinputdevice.registerKey('MediaStop');
+      tizenApi.tvinputdevice.registerKey('ChannelUp');
+      tizenApi.tvinputdevice.registerKey('ChannelDown');
     } catch {
       // Running in browser dev environment — Tizen APIs unavailable
     }

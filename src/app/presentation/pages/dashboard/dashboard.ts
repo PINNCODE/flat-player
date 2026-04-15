@@ -241,6 +241,11 @@ export class Dashboard implements AfterViewInit {
 
     event.preventDefault();
 
+    if (action === 'chup' || action === 'chdown') {
+      this.zap(action === 'chup' ? 'next' : 'previous');
+      return;
+    }
+
     if (action === 'back') {
       this.handleBackAction();
       return;
@@ -358,8 +363,12 @@ export class Dashboard implements AfterViewInit {
     }
   }
 
-  private resolveRemoteAction(key: string): 'up' | 'down' | 'left' | 'right' | 'ok' | 'back' | null {
+  private resolveRemoteAction(key: string): 'up' | 'down' | 'left' | 'right' | 'ok' | 'back' | 'chup' | 'chdown' | null {
     switch (key) {
+      case 'ChannelUp':
+        return 'chup';
+      case 'ChannelDown':
+        return 'chdown';
       case 'ArrowUp':
         return 'up';
       case 'ArrowDown':
