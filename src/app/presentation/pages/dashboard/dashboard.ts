@@ -59,6 +59,9 @@ export class Dashboard implements AfterViewInit {
   protected readonly selectedCategoryIndex = signal(0);
   protected readonly selectedChannelIndex = signal(0);
   protected readonly currentChannel = signal<TvChannel | null>(null);
+  protected readonly favoriteChannelIds = signal<string[]>([]);
+  private favoriteTimeoutId: any = null;
+  private lastOkClickTime = 0;
   protected readonly currentChannelGuide = signal<readonly EpgListing[]>([]);
   protected readonly focusedChannelGuide = signal<readonly EpgListing[]>([]);
 
@@ -341,6 +344,7 @@ export class Dashboard implements AfterViewInit {
 
       const settings = this.getUserSettingsUseCase.execute();
 
+      this.favoriteChannelIds.set(this.getTopFavoriteIds());
       this.refreshHomeRecommendations();
 
       if (!initialSelection) {
@@ -383,7 +387,16 @@ export class Dashboard implements AfterViewInit {
     }
 
     if (action === 'ok') {
-      this.toggleInfoBar();
+      const now = Date.now();
+      if (now - this.lastOkClickTime < 500) {
+        const channel = this.currentChannel();
+        if (channel) {
+          this.trackFavoriteChannel(channel.id);
+        }
+      } else {
+        this.toggleInfoBar();
+      }
+      this.lastOkClickTime = now;
       return;
     }
 
@@ -705,7 +718,13 @@ export class Dashboard implements AfterViewInit {
       // Ignore si localStorage no está disponible
     }
 
-    this.trackFavoriteChannel(channel.id);
+    if (this.favoriteTimeoutId) {
+      clearTimeout(this.favoriteTimeoutId);
+      this.favoriteTimeoutId = null;
+    }
+    this.favoriteTimeoutId = setTimeout(() => {
+      this.trackFavoriteChannel(channel.id);
+    }, 5 * 60 * 1000);
 
     this.showVideoMeta();
     this.startPlayback(channel);
@@ -928,6 +947,7 @@ export class Dashboard implements AfterViewInit {
       scores[channelId] = record;
       
       localStorage.setItem(STORAGE_KEY, JSON.stringify(scores));
+      this.favoriteChannelIds.set(this.getTopFavoriteIds());
     } catch (e) {
       console.warn('No se pudo guardar score de canal', e);
     }

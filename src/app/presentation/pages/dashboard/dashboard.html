@@ -96,7 +96,7 @@
                       <span class="tv-dashboard__home-card-badge tv-dashboard__home-card-badge--live">Ahora</span>
                       }
                     </div>
-                    <p class="tv-dashboard__home-card-title">{{ event.title }}</p>
+                    <p class="tv-dashboard__home-card-title">{{ event.title }} @if (favoriteChannelIds().includes(event.channel.id)) { <span style="font-size: 0.85em; margin-left: 4px; color: #ff3b30;">❤️</span> }</p>
                     <p class="tv-dashboard__home-card-subtitle">{{ event.timeLabel }} · {{ event.subtitle }}</p>
                   </div>
                 </li>
@@ -112,7 +112,7 @@
                     }
                   </div>
                   <div class="tv-dashboard__home-card-meta">
-                    <p class="tv-dashboard__home-card-title">{{ channel.currentProgram.title || channel.name }}</p>
+                    <p class="tv-dashboard__home-card-title">{{ channel.currentProgram.title || channel.name }} @if (favoriteChannelIds().includes(channel.id)) { <span style="font-size: 0.85em; margin-left: 4px; color: #ff3b30;">❤️</span> }</p>
                     <p class="tv-dashboard__home-card-subtitle">{{ channel.name }}</p>
                   </div>
                 </li>
@@ -178,7 +178,7 @@
             <span class="tv-dashboard__channel-logo">{{ channel.logoLabel }}</span>
             }
             <div class="tv-dashboard__channel-meta">
-              <p class="tv-dashboard__channel-name">{{ channel.name }}</p>
+              <p class="tv-dashboard__channel-name">{{ channel.name }} @if (favoriteChannelIds().includes(channel.id)) { <span style="font-size: 0.85em; margin-left: 4px; color: #ff3b30;">❤️</span> }</p>
               <p class="tv-dashboard__program-name">{{ channel.currentProgram.title }}</p>
               <div class="tv-dashboard__program-progress-track">
                 <div class="tv-dashboard__program-progress-fill"
@@ -223,7 +223,7 @@
             <span class="tv-dashboard__channel-logo">{{ result.channel.logoLabel }}</span>
             }
             <div class="tv-dashboard__channel-meta">
-              <p class="tv-dashboard__channel-name">{{ result.channel.name }}</p>
+              <p class="tv-dashboard__channel-name">{{ result.channel.name }} @if (favoriteChannelIds().includes(result.channel.id)) { <span style="font-size: 0.85em; margin-left: 4px; color: #ff3b30;">❤️</span> }</p>
               <p class="tv-dashboard__program-name">{{ result.channel.currentProgram.title }}</p>
               <div class="tv-dashboard__program-progress-track">
                 <div class="tv-dashboard__program-progress-fill"
