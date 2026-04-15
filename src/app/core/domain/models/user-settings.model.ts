@@ -1,6 +1,4 @@
-export interface UserSettings {
-  country: string | null;
-}
+export interface UserSettings {}
 
 export const HISPANIC_AMERICA_COUNTRIES: string[] = [
   'Argentina',

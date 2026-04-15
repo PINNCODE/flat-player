@@ -17,12 +17,7 @@ export class LocalUserSettingsService implements UserSettingsPort {
     } catch {
       // Ignore parse errors
     }
-    return { country: null };
+    return {} as UserSettings;
   }
 
-  setCountry(country: string | null): void {
-    const current = this.getSettings();
-    current.country = country;
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(current));
-  }
 }

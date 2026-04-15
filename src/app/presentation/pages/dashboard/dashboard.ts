@@ -14,7 +14,7 @@ import { UserInfo } from '@core/domain/models/auth-response.model';
 import { GetUserInfoUseCase } from '@core/application/usecases/get-user-info.usecase';
 import { HISPANIC_AMERICA_COUNTRIES } from '@core/domain/models/user-settings.model';
 import { GetUserSettingsUseCase } from '@core/application/usecases/get-user-settings.usecase';
-import { SaveUserCountryUseCase } from '@core/application/usecases/save-user-country.usecase';
+
 import { GetHomeRecommendationsUseCase } from '@core/application/usecases/get-home-recommendations.usecase';
 import { HomeRecommendations } from '@core/domain/models/home-recommendations.model';
 import { VideoPlaybackFacade } from '../../services/video-playback.facade';
@@ -71,8 +71,7 @@ export class Dashboard implements AfterViewInit {
   protected readonly showLogoutDialog = signal(false);
   protected readonly logoutDialogActionIndex = signal(1); // 0: Continuar, 1: Cancelar
 
-  protected readonly settingsFocusedIndex = signal(0); // 0: Country Selector, 1: Logout
-  protected readonly userCountry = signal<string | null>(null);
+  protected readonly settingsFocusedIndex = signal(0); // 0: Logout
   protected readonly availableCountries = HISPANIC_AMERICA_COUNTRIES;
 
   protected readonly homeRecommendations = signal<HomeRecommendations | null>(null);
@@ -170,7 +169,7 @@ export class Dashboard implements AfterViewInit {
   private readonly getChannelEpgUseCase = inject(GetChannelEpgUseCase);
   private readonly getUserInfoUseCase = inject(GetUserInfoUseCase);
   private readonly getUserSettingsUseCase = inject(GetUserSettingsUseCase);
-  private readonly saveUserCountryUseCase = inject(SaveUserCountryUseCase);
+
   private readonly getHomeRecommendationsUseCase = inject(GetHomeRecommendationsUseCase);
   private readonly videoPlaybackFacade = inject(VideoPlaybackFacade);
   private readonly router = inject(Router);
@@ -341,7 +340,7 @@ export class Dashboard implements AfterViewInit {
       });
 
       const settings = this.getUserSettingsUseCase.execute();
-      this.userCountry.set(settings.country);
+
       this.refreshHomeRecommendations();
 
       if (!initialSelection) {
@@ -593,35 +592,12 @@ export class Dashboard implements AfterViewInit {
     }
 
     if (action === 'left') {
-      if (this.settingsFocusedIndex() === 0) {
-        // Change country left
-        this.cycleCountry(-1);
-      } else {
-        this.activePanel.set('menu');
-      }
+      this.activePanel.set('menu');
       return;
     }
 
-    if (action === 'right') {
-       if (this.settingsFocusedIndex() === 0) {
-          // Change country right
-          this.cycleCountry(1);
-       }
-       return;
-    }
-
-    if (action === 'up') {
-       this.settingsFocusedIndex.set(0);
-       return;
-    }
-
-    if (action === 'down') {
-       this.settingsFocusedIndex.set(1);
-       return;
-    }
-
     if (action === 'ok') {
-      if (this.settingsFocusedIndex() === 1) {
+      if (this.settingsFocusedIndex() === 0) {
         this.showLogoutDialog.set(true);
         this.logoutDialogActionIndex.set(1);
       }
@@ -919,20 +895,6 @@ export class Dashboard implements AfterViewInit {
     return centered;
   }
 
-  private cycleCountry(delta: number): void {
-    const current = this.userCountry();
-    let index = current ? this.availableCountries.indexOf(current) : -1;
-    if (index === -1) {
-      index = 0;
-    } else {
-      index = (index + delta + this.availableCountries.length) % this.availableCountries.length;
-    }
-    const selected = this.availableCountries[index];
-    this.userCountry.set(selected);
-    this.saveUserCountryUseCase.execute(selected);
-    this.refreshHomeRecommendations();
-  }
-
   private refreshHomeRecommendations(): void {
     const recommendations = this.getHomeRecommendationsUseCase.execute(this.categories(), this.getTopFavoriteIds());
     this.homeRecommendations.set(recommendations);
@@ -945,11 +907,26 @@ export class Dashboard implements AfterViewInit {
     try {
       const STORAGE_KEY = 'iptv_channel_scores';
       const scoresStr = localStorage.getItem(STORAGE_KEY);
-      let scores: Record<string, number> = {};
+      let scores: Record<string, { count: number, lastPlayed: number }> = {};
+      
       if (scoresStr) {
-        try { scores = JSON.parse(scoresStr); } catch (e) {}
+        try { 
+          const parsed = JSON.parse(scoresStr);
+          Object.keys(parsed).forEach(k => {
+            if (typeof parsed[k] === 'number') {
+              scores[k] = { count: parsed[k], lastPlayed: Date.now() };
+            } else {
+              scores[k] = parsed[k];
+            }
+          });
+        } catch (e) {}
       }
-      scores[channelId] = (scores[channelId] || 0) + 1;
+      
+      const record = scores[channelId] || { count: 0, lastPlayed: 0 };
+      record.count += 1;
+      record.lastPlayed = Date.now();
+      scores[channelId] = record;
+      
       localStorage.setItem(STORAGE_KEY, JSON.stringify(scores));
     } catch (e) {
       console.warn('No se pudo guardar score de canal', e);
@@ -960,9 +937,19 @@ export class Dashboard implements AfterViewInit {
     try {
       const scoresStr = localStorage.getItem('iptv_channel_scores');
       if (!scoresStr) return [];
-      const scores: Record<string, number> = JSON.parse(scoresStr);
+      
+      let scores: Record<string, { count: number, lastPlayed: number }> = {};
+      const parsed = JSON.parse(scoresStr);
+      Object.keys(parsed).forEach(k => {
+         if (typeof parsed[k] === 'number') {
+           scores[k] = { count: parsed[k], lastPlayed: 0 };
+         } else {
+           scores[k] = parsed[k];
+         }
+      });
+
       return Object.entries(scores)
-        .sort((a, b) => b[1] - a[1])
+        .sort((a, b) => b[1].lastPlayed - a[1].lastPlayed)
         .map(([id]) => id);
     } catch (e) {
       return [];

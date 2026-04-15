@@ -18,18 +18,7 @@
     </div>
     }
 
-    <div class="tv-dashboard__settings-card">
-      <h3 class="tv-dashboard__settings-card-title">Región y Contenido</h3>
-      <div class="tv-dashboard__settings-selector" [class.tv-dashboard__settings-selector--focused]="settingsFocusedIndex() === 0">
-        <span class="tv-dashboard__settings-label">País de Residencia</span>
-        <div class="tv-dashboard__settings-control">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
-          <span class="tv-dashboard__settings-value--select">{{ selectedCountryLabel() }}</span>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>
-        </div>
-      </div>
-      <p class="tv-dashboard__settings-hint">Las recomendaciones de Inicio se adaptarán al país que elijas.</p>
-    </div>
+
 
     <button type="button" class="tv-dashboard__settings-action-btn" [class.tv-dashboard__settings-action-btn--focused]="settingsFocusedIndex() === 1">
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

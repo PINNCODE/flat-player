@@ -233,19 +233,5 @@ export class GetHomeRecommendationsUseCase {
     return hours * 60 + minutes;
   }
 
-  private getCountryKeywords(normalizedCountry: string): string[] {
-     // A veces M3U lists usan prefijos como AR, MX, ES
-     const kw = [normalizedCountry];
-     if (normalizedCountry === 'argentina') kw.push('ar', 'arg');
-     if (normalizedCountry === 'mexico') kw.push('mx', 'mex');
-     if (normalizedCountry === 'chile') kw.push('cl');
-     if (normalizedCountry === 'colombia') kw.push('co', 'col');
-     if (normalizedCountry === 'espana') kw.push('es');
-     if (normalizedCountry === 'estados unidos') kw.push('us', 'usa', 'eeuu');
-     if (normalizedCountry === 'peru') kw.push('pe');
-     if (normalizedCountry === 'venezuela') kw.push('ve', 'ven');
-     // Wrap short codes in | or [] to avoid matching random words (e.g., 'ar' in 'cartoon') but for now exact or boundary checks
-     return kw.map(k => k.length <= 3 ? `|${k}|` : k);
-     // Note: This is rudimentary, but |MX| or [MX] is very common in iptv lists.
-  }
+
 }
