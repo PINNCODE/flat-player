@@ -312,12 +312,32 @@ export class Dashboard implements AfterViewInit {
 
       this.categories.set(catalog);
 
+      let targetCategoryIndex = 0;
+      let targetChannelIndex = 0;
+
+      // Recuperar el último canal reproducido para iniciar automáticamente en él
+      try {
+        const lastPlayedId = localStorage.getItem('iptv_last_played_channel');
+        if (lastPlayedId) {
+          for (let i = 0; i < catalog.length; i++) {
+            const chIndex = catalog[i].channels.findIndex(c => c.id === lastPlayedId);
+            if (chIndex !== -1) {
+              targetCategoryIndex = i;
+              targetChannelIndex = chIndex;
+              break;
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('No se pudo acceder a localStorage para recuperar el último canal');
+      }
+
       const initialSelection = this.changeChannelUseCase.execute({
         categories: catalog,
         currentCategoryIndex: 0,
         currentChannelIndex: 0,
-        targetCategoryIndex: 0,
-        targetChannelIndex: 0,
+        targetCategoryIndex,
+        targetChannelIndex,
       });
 
       const settings = this.getUserSettingsUseCase.execute();
@@ -701,6 +721,14 @@ export class Dashboard implements AfterViewInit {
     this.focusedChannelIndex.set(channelIndex);
 
     this.currentChannel.set(channel);
+    
+    // Guardar la preferencia del último canal
+    try {
+      localStorage.setItem('iptv_last_played_channel', channel.id);
+    } catch(e) {
+      // Ignore si localStorage no está disponible
+    }
+
     this.showVideoMeta();
     this.startPlayback(channel);
     void this.loadChannelEpg(channel);

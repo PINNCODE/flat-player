@@ -148,23 +148,22 @@ export class VideoPlaybackFacade {
       enableWorker: true,
       lowLatencyMode: false,
 
-      // ── Sincronización (familia *Duration — NO mezclar con *Count) ────
-      // hls.js lanza error si se combinan ambas familias.
-      // liveSyncDuration: distancia objetivo al live edge en segundos.
-      // Seteado en 7s para estar lo más cerca posible del vivo en deportes.
-      liveSyncDuration: 7,
-      // Latencia máxima tolerable; si se supera los 15s, hls.js fuerza resync.
-      liveMaxLatencyDuration: 15,
- 
+      // ── Sincronización (Modo SeguridadChunks) ────
+      // Ajuste a 20s (2 chunks detrás del vivo absoluto).
+      // Es el límite físico para evitar que el buffer llegue a 0s.
+      liveSyncDuration: 25,
+      // Latencia máxima tolerable antes del resync.
+      liveMaxLatencyDuration: 30,
+
       // ── Aceleración automática ────────────────────────────────────────
-      // hls.js sube el playbackRate hasta 1.25x para recuperar latencia rápido.
-      maxLiveSyncPlaybackRate: 1.25,
+      // Catch-up suave para acomodarse a la latencia de 20s.
+      maxLiveSyncPlaybackRate: 1.15,
 
       // ── Gestión de buffer ─────────────────────────────────────────────
-      maxBufferLength: 15,
-      maxMaxBufferLength: 20,
-      // 0 = hls.js libera el video ya reproducido → menos RAM en Tizen.
-      backBufferLength: 0,
+      // Alivio enfocado a web (sin límite agresivo de backBuffer).
+      maxBufferLength: 30,
+      maxMaxBufferLength: 40,
+      backBufferLength: 10,
     });
     this.hls.loadSource(sourceUrl);
     this.hls.attachMedia(videoElement);
@@ -188,34 +187,13 @@ export class VideoPlaybackFacade {
         // Freno inmediato: cancelar cualquier aceleración activa.
         this.applyPlaybackRate(videoElement, 1);
 
-        // Resiliencia: seek de 2s hacia atrás para recuperar el flujo de datos.
-        // Un pequeño retroceso reactiva la descarga de segmentos en hls.js.
-        if (
-          !this.isSeekInProgress &&
-          !videoElement.paused &&
-          Number.isFinite(videoElement.currentTime) &&
-          videoElement.currentTime > 2
-        ) {
-          const rewindTarget = Math.max(0, videoElement.currentTime - 2);
-          this.isSeekInProgress = true;
-          videoElement.currentTime = rewindTarget;
+        // -- Registro de Telemetría Empírica --
+        const currentTime = videoElement.currentTime || 0;
+        const bufferAhead = this.getBufferAhead(videoElement, currentTime);
+        const liveEdge = this.getLiveEdge(videoElement, currentTime, bufferAhead);
+        const latency = Number.isFinite(liveEdge) ? Math.max(0, liveEdge - currentTime) : 0;
 
-          const onStalledSeeked = () => {
-            this.isSeekInProgress = false;
-            videoElement.removeEventListener('seeked', onStalledSeeked);
-            if (this.seekGuardTimeout) {
-              clearTimeout(this.seekGuardTimeout);
-              this.seekGuardTimeout = null;
-            }
-          };
-          videoElement.addEventListener('seeked', onStalledSeeked, { once: true });
-
-          // Guard para Tizen: el evento 'seeked' puede no dispararse.
-          this.seekGuardTimeout = setTimeout(() => {
-            this.isSeekInProgress = false;
-            this.seekGuardTimeout = null;
-          }, 2000);
-        }
+        this.logStallTelemetry(liveEdge, currentTime, latency, bufferAhead);
       }
 
       if (!data.fatal) {
@@ -586,5 +564,39 @@ export class VideoPlaybackFacade {
 
     const lastEnd = videoElement.buffered.end(videoElement.buffered.length - 1);
     return Math.max(0, lastEnd - currentTime);
+  }
+
+  private logStallTelemetry(liveEdge: number, currentTime: number, latency: number, bufferAhead: number): void {
+    try {
+      const STORAGE_KEY = 'iptv_stall_telemetry';
+      const MAX_LOGS = 50;
+
+      const historyStr = localStorage.getItem(STORAGE_KEY);
+      let history: any[] = [];
+
+      if (historyStr) {
+        try {
+          history = JSON.parse(historyStr);
+        } catch (e) {
+          history = [];
+        }
+      }
+
+      history.push({
+        timestamp: new Date().toISOString(),
+        liveEdge: Number(liveEdge.toFixed(2)),
+        currentTime: Number(currentTime.toFixed(2)),
+        latency: Number(latency.toFixed(2)),
+        bufferAhead: Number(bufferAhead.toFixed(2))
+      });
+
+      if (history.length > MAX_LOGS) {
+        history = history.slice(-MAX_LOGS);
+      }
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+    } catch (e) {
+      console.warn('No se pudo guardar la telemetría del stall en localStorage', e);
+    }
   }
 }
