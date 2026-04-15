@@ -67,7 +67,7 @@ describe('GetHomeRecommendationsUseCase', () => {
       },
     ];
 
-    const recommendations = useCase.execute(categories, null);
+    const recommendations = useCase.execute(categories, []);
     const sportsRow = recommendations.rows.find((row) => row.id === 'sports-ppv-row');
 
     expect(sportsRow).toBeTruthy();
@@ -102,14 +102,30 @@ describe('GetHomeRecommendationsUseCase', () => {
             logoLabel: 'MGP',
             currentProgram: { title: 'MotoGP 11h45 carrera', progressPercent: 1 },
           },
+          {
+            id: 'ch-3',
+            name: 'Pelea PM',
+            streamId: '3',
+            streamType: 'hls',
+            logoLabel: 'UFC',
+            currentProgram: { title: 'UFC 05:30 PM', progressPercent: 1 },
+          },
+          {
+            id: 'ch-4',
+            name: 'Pelea AM',
+            streamId: '4',
+            streamType: 'hls',
+            logoLabel: 'UFC',
+            currentProgram: { title: 'UFC 12:00 am', progressPercent: 1 },
+          },
         ],
       },
     ];
 
-    const recommendations = useCase.execute(categories, null);
+    const recommendations = useCase.execute(categories, []);
     const sportsRow = recommendations.rows.find((row) => row.id === 'sports-ppv-row');
 
-    expect(sportsRow?.events?.map((event) => event.timeLabel)).toEqual(['09:15', '11:45']);
+    expect(sportsRow?.events?.map((event) => event.timeLabel)).toEqual(['00:00', '09:15', '11:45', '17:30']);
   });
 
   it('does not include events from earlier hours and does not include entries without parsable time', () => {

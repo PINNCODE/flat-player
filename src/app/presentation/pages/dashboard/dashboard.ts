@@ -729,6 +729,8 @@ export class Dashboard implements AfterViewInit {
       // Ignore si localStorage no está disponible
     }
 
+    this.trackFavoriteChannel(channel.id);
+
     this.showVideoMeta();
     this.startPlayback(channel);
     void this.loadChannelEpg(channel);
@@ -932,11 +934,39 @@ export class Dashboard implements AfterViewInit {
   }
 
   private refreshHomeRecommendations(): void {
-    const recommendations = this.getHomeRecommendationsUseCase.execute(this.categories(), this.userCountry());
+    const recommendations = this.getHomeRecommendationsUseCase.execute(this.categories(), this.getTopFavoriteIds());
     this.homeRecommendations.set(recommendations);
     this.homeFocusedRowIndex.set(0);
     this.homeFocusedItemIndex.set(0);
     this.scrollHomeRowsToTop();
+  }
+
+  private trackFavoriteChannel(channelId: string): void {
+    try {
+      const STORAGE_KEY = 'iptv_channel_scores';
+      const scoresStr = localStorage.getItem(STORAGE_KEY);
+      let scores: Record<string, number> = {};
+      if (scoresStr) {
+        try { scores = JSON.parse(scoresStr); } catch (e) {}
+      }
+      scores[channelId] = (scores[channelId] || 0) + 1;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(scores));
+    } catch (e) {
+      console.warn('No se pudo guardar score de canal', e);
+    }
+  }
+
+  private getTopFavoriteIds(): string[] {
+    try {
+      const scoresStr = localStorage.getItem('iptv_channel_scores');
+      if (!scoresStr) return [];
+      const scores: Record<string, number> = JSON.parse(scoresStr);
+      return Object.entries(scores)
+        .sort((a, b) => b[1] - a[1])
+        .map(([id]) => id);
+    } catch (e) {
+      return [];
+    }
   }
 
   private handleHomeNavigation(action: 'up' | 'down' | 'left' | 'right' | 'ok'): void {

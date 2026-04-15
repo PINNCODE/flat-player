@@ -6,7 +6,7 @@ import { HomeEventItem, HomeRecommendations, HomeRow } from '../../domain/models
   providedIn: 'root'
 })
 export class GetHomeRecommendationsUseCase {
-  execute(categories: readonly TvCategory[], country: string | null): HomeRecommendations {
+  execute(categories: readonly TvCategory[], favoriteIds: string[] = []): HomeRecommendations {
     if (!categories || categories.length === 0) {
       return { rows: [] };
     }
@@ -18,6 +18,7 @@ export class GetHomeRecommendationsUseCase {
 
     const rows: HomeRow[] = [];
     const now = new Date();
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
 
     // 1. "Eventos de Hoy" o "Tendencias"
     // Buscamos canales que estén emitiendo algo actualmente con buen progreso o que tengan título y estén en deportes o movies
@@ -30,36 +31,19 @@ export class GetHomeRecommendationsUseCase {
       rows.push(sportsEventsRow);
      }
 
-    // 2. Fila "Canales de tu País" si hay país seleccionado
-    if (country) {
-      const countryNormalized = this.normalizeString(country);
-      const countryKeywords = this.getCountryKeywords(countryNormalized);
-      
-      const countryChannels = allChannels.filter(c => {
-         const nameNorm = this.normalizeString(c.name);
-         return countryKeywords.some(kw => nameNorm.includes(kw));
-      });
+    // 2. Fila "Mis Favoritos"
+    const favoriteChannels: TvChannel[] = [];
+    favoriteIds.forEach(favId => {
+      const ch = allChannels.find(c => c.id === favId);
+      if (ch) favoriteChannels.push(ch);
+    });
 
-      // También revisar si hay categorías con el nombre del país
-      const countryCategories = categories.filter(cat => {
-        const catNorm = this.normalizeString(cat.name);
-        return countryKeywords.some(kw => catNorm.includes(kw));
+    if (favoriteChannels.length > 0) {
+      rows.push({
+        id: 'favorites-row',
+        title: 'Mis Favoritos',
+        channels: favoriteChannels.slice(0, 20)
       });
-      countryCategories.forEach(cat => {
-         cat.channels.forEach(ch => {
-           if (!countryChannels.find(c => c.id === ch.id)) {
-              countryChannels.push(ch);
-           }
-         });
-      });
-
-      if (countryChannels.length > 0) {
-        rows.push({
-          id: 'country-row',
-          title: `Recomendados en ${country}`,
-          channels: countryChannels.slice(0, 20) // Limit to 20 for performance
-        });
-      }
     }
 
     // 3. Fila "En Vivo Ahora"
@@ -72,14 +56,47 @@ export class GetHomeRecommendationsUseCase {
       });
     }
 
-    // 4. Fila Aleatoria "Para ti"
-    const randomChannels = [...allChannels].sort(() => 0.5 - Math.random()).slice(0, 20);
-    if (randomChannels.length > 0) {
-       rows.push({
-         id: 'foryou-row',
-         title: 'Para ti',
-         channels: randomChannels
-       });
+    // 4. Fila "Para ti" dinámica (Basada en categorías afines y canales HD)
+    if (favoriteChannels.length > 0) {
+      const favoriteCategoryIds = new Set<string>();
+      categories.forEach(cat => {
+        cat.channels.forEach(ch => {
+          if (favoriteIds.includes(ch.id)) {
+            favoriteCategoryIds.add(cat.id);
+          }
+        });
+      });
+
+      const siblingChannelsHD: TvChannel[] = [];
+      categories.forEach(cat => {
+        if (favoriteCategoryIds.has(cat.id)) {
+          cat.channels.forEach(ch => {
+            if (!favoriteIds.includes(ch.id)) {
+              const nameNorm = this.normalizeString(ch.name);
+              if (nameNorm.includes('hd')) {
+                const parsedTime = this.extractEventTime(ch.name);
+                if (parsedTime) {
+                   const eventMinutes = parsedTime.hour * 60 + parsedTime.minute;
+                   if (eventMinutes <= nowMinutes) {
+                     siblingChannelsHD.push(ch);
+                   }
+                } else {
+                   // No tiene hora en el nombre explícito, no lo omitimos (Asumimos continuo)
+                   siblingChannelsHD.push(ch);
+                }
+              }
+            }
+          });
+        }
+      });
+
+      if (siblingChannelsHD.length > 0) {
+        rows.push({
+          id: 'foryou-hd-row',
+          title: 'Para ti',
+          channels: siblingChannelsHD.slice(0, 20)
+        });
+      }
     }
 
     return { rows };
@@ -173,9 +190,9 @@ export class GetHomeRecommendationsUseCase {
 
   private extractEventTime(rawName: string): { hour: number; minute: number; label: string } | null {
     const regexPatterns = [
-      /\b([01]?\d|2[0-3]):([0-5]\d)\b/,
-      /\b([01]?\d|2[0-3])\.([0-5]\d)\b/,
-      /\b([01]?\d|2[0-3])h([0-5]\d)\b/i,
+      /\b([01]?\d|2[0-3]):([0-5]\d)(?:\s*(am|pm|a\.m\.|p\.m\.))?\b/i,
+      /\b([01]?\d|2[0-3])\.([0-5]\d)(?:\s*(am|pm|a\.m\.|p\.m\.))?\b/i,
+      /\b([01]?\d|2[0-3])h([0-5]\d)(?:\s*(am|pm|a\.m\.|p\.m\.))?\b/i,
     ];
 
     for (const regex of regexPatterns) {
@@ -184,10 +201,20 @@ export class GetHomeRecommendationsUseCase {
         continue;
       }
 
-      const hour = Number(match[1]);
+      let hour = Number(match[1]);
       const minute = Number(match[2]);
       if (Number.isNaN(hour) || Number.isNaN(minute)) {
         continue;
+      }
+
+      const modifier = match[3] ? match[3].toLowerCase() : null;
+      if (modifier) {
+        const isPm = modifier.startsWith('p');
+        if (isPm && hour < 12) {
+          hour += 12;
+        } else if (!isPm && hour === 12) {
+          hour = 0;
+        }
       }
 
       const label = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
