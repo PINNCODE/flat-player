@@ -233,9 +233,12 @@ export class Dashboard implements AfterViewInit {
       return;
     }
 
-    const action = this.resolveRemoteAction(event.key);
+    const action = this.resolveRemoteAction(event.key, event.keyCode);
 
     if (!action) {
+      if (this.debugMode()) {
+        this.showToast(`UNMAPPED KEY // key: ${event.key} | code: ${event.code} | keyCode: ${event.keyCode}`);
+      }
       return;
     }
 
@@ -363,12 +366,11 @@ export class Dashboard implements AfterViewInit {
     }
   }
 
-  private resolveRemoteAction(key: string): 'up' | 'down' | 'left' | 'right' | 'ok' | 'back' | 'chup' | 'chdown' | null {
+  private resolveRemoteAction(key: string, keyCode?: number): 'up' | 'down' | 'left' | 'right' | 'ok' | 'back' | 'chup' | 'chdown' | null {
+    if (keyCode === 427 || key === 'ChannelUp' || key === 'XF86ChannelUp') return 'chup';
+    if (keyCode === 428 || key === 'ChannelDown' || key === 'XF86ChannelDown') return 'chdown';
+
     switch (key) {
-      case 'ChannelUp':
-        return 'chup';
-      case 'ChannelDown':
-        return 'chdown';
       case 'ArrowUp':
         return 'up';
       case 'ArrowDown':
