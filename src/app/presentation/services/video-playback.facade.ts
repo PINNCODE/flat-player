@@ -152,8 +152,8 @@ export class VideoPlaybackFacade {
       // Ajuste a 30s (3 chunks detrás del vivo absoluto).
       // Es el límite físico para evitar que el buffer llegue a 0s.
       liveSyncDuration: 30,
-      // Latencia máxima tolerable antes del resync.
-      liveMaxLatencyDuration: 30,
+      // Latencia máxima tolerable antes del resync (debe ser > liveSyncDuration).
+      liveMaxLatencyDuration: 90,
 
       // ── Aceleración automática ────────────────────────────────────────
       // Catch-up suave para acomodarse a la latencia de 20s.
