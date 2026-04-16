@@ -149,9 +149,9 @@ export class VideoPlaybackFacade {
       lowLatencyMode: false,
 
       // ── Sincronización (Modo SeguridadChunks) ────
-      // Ajuste a 20s (2 chunks detrás del vivo absoluto).
+      // Ajuste a 30s (3 chunks detrás del vivo absoluto).
       // Es el límite físico para evitar que el buffer llegue a 0s.
-      liveSyncDuration: 25,
+      liveSyncDuration: 30,
       // Latencia máxima tolerable antes del resync.
       liveMaxLatencyDuration: 30,
 
