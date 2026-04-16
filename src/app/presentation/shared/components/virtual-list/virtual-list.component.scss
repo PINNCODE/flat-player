@@ -1,0 +1,126 @@
+/**
+ * Estilos para VirtualListComponent
+ * Optimizados para Samsung TV con scroll suave y alto contraste
+ */
+
+.virtual-list-container {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  
+  // Optimización de scroll para TV
+  scrollbar-width: thin;
+  scrollbar-color: #00a9ff #1a1a1a;
+  -webkit-overflow-scrolling: touch;
+
+  // Scrollbar personalizado para WebKit
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #1a1a1a;
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #00a9ff;
+    border-radius: 4px;
+    
+    &:hover {
+      background: #0088cc;
+    }
+  }
+
+  &::-webkit-scrollbar-corner {
+    background: #1a1a1a;
+  }
+
+  // Modo horizontal
+  &.horizontal {
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+}
+
+.virtual-list-content {
+  position: relative;
+  width: 100%;
+  min-height: 100%;
+}
+
+.virtual-list-items {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  
+  // Optimización de rendering
+  will-change: transform;
+  contain: layout style paint;
+}
+
+.virtual-list-spacer {
+  flex-shrink: 0;
+  
+  &.spacer-top {
+    width: 100%;
+  }
+
+  &.spacer-bottom {
+    width: 100%;
+  }
+
+  &.spacer-left {
+    height: 100%;
+  }
+
+  &.spacer-right {
+    height: 100%;
+  }
+}
+
+// Optimización para TV: sin scroll por hover
+.virtual-list-container:hover {
+  cursor: default;
+}
+
+// Estados de foco para accesibilidad
+.virtual-list-container:focus {
+  outline: none;
+}
+
+.virtual-list-container:focus-visible {
+  outline: 2px solid #00a9ff;
+  outline-offset: 2px;
+}
+
+// Animaciones suaves
+@media (prefers-reduced-motion: no-preference) {
+  .virtual-list-container {
+    scroll-behavior: smooth;
+  }
+}
+
+// Optimización para pantallas 4K
+@media (min-width: 3840px) {
+  .virtual-list-container {
+    &::-webkit-scrollbar {
+      width: 12px;
+      height: 12px;
+    }
+  }
+}
+
+// Optimización para rendimiento en listas muy grandes
+.virtual-list-items > * {
+  // Evitar layout trashing
+  contain: layout style;
+  
+  // Optimización de GPU
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}

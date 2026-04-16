@@ -1,0 +1,44 @@
+<div 
+  #container 
+  class="virtual-list-container"
+  [class.horizontal]="horizontal"
+  (scroll)="onScroll($event)"
+  role="list"
+  aria-label="Virtual list"
+>
+  <div 
+    #content
+    class="virtual-list-content"
+    [style.height.px]="totalHeight"
+    [style.width.px]="totalWidth"
+  >
+    <div 
+      class="virtual-list-spacer"
+      [class.spacer-top]="!horizontal"
+      [class.spacer-left]="horizontal"
+      [style.height.px]="horizontal ? viewportHeight : startIndex * itemHeight"
+      [style.width.px]="horizontal ? startIndex * itemHeight : viewportWidth"
+    ></div>
+
+    <div class="virtual-list-items">
+      @for (item of visibleItems; track item.id) {
+        <div 
+          role="listitem"
+          [attr.aria-label]="item.id"
+        >
+          @if (itemTemplate()) {
+            <ng-container [ngTemplateOutlet]="itemTemplate()" [ngTemplateOutletContext]="{ $implicit: item }"></ng-container>
+          }
+        </div>
+      }
+    </div>
+
+    <div 
+      class="virtual-list-spacer"
+      [class.spacer-bottom]="!horizontal"
+      [class.spacer-right]="horizontal"
+      [style.height.px]="horizontal ? viewportHeight : (items.length - endIndex) * itemHeight"
+      [style.width.px]="horizontal ? (items.length - endIndex) * itemHeight : viewportWidth"
+    ></div>
+  </div>
+</div>
