@@ -1,0 +1,40 @@
+<div 
+  *ngIf="isVisible"
+  class="dialog-overlay"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="exit-dialog-title"
+  (click)="onCancel()"
+>
+  <div 
+    class="dialog-container"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="dialog-header">
+      <h2 id="exit-dialog-title">¿Salir de la aplicación?</h2>
+    </div>
+
+    <div class="dialog-body">
+      <p>¿Estás seguro de que deseas salir de FlatPlayer?</p>
+    </div>
+
+    <div class="dialog-footer">
+      <button 
+        class="btn-cancel"
+        (click)="onCancel()"
+        role="button"
+        aria-label="Cancelar"
+      >
+        Cancelar
+      </button>
+      <button 
+        class="btn-confirm"
+        (click)="onConfirm()"
+        role="button"
+        aria-label="Confirmar salida"
+      >
+        Salir
+      </button>
+    </div>
+  </div>
+</div>
