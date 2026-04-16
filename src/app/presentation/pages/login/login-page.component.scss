@@ -1,0 +1,265 @@
+/**
+ * Estilos para LoginPageComponent
+ * Optimizados para Samsung TV con navegación por control remoto
+ */
+
+.login-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 40px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+.login-card {
+  background: #1f1f3a;
+  border-radius: 20px;
+  padding: 48px;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  border: 2px solid #333355;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.login-title {
+  font-size: 48px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 12px 0;
+  letter-spacing: -1px;
+}
+
+.login-subtitle {
+  font-size: 20px;
+  color: #8888aa;
+  margin: 0;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-label {
+  font-size: 18px;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0;
+}
+
+.form-input {
+  width: 100%;
+  padding: 16px 20px;
+  font-size: 20px;
+  background: #2a2a4a;
+  border: 2px solid #333355;
+  border-radius: 12px;
+  color: #ffffff;
+  outline: none;
+  transition: all 0.2s ease-in-out;
+
+  &::placeholder {
+    color: #666688;
+  }
+
+  &:focus {
+    border-color: #00a9ff;
+    background: #2a2a55;
+  }
+
+  &[aria-invalid="true"] {
+    border-color: #ff4757;
+  }
+}
+
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  padding: 8px;
+  font-size: 24px;
+  cursor: pointer;
+  color: #8888aa;
+  transition: color 0.2s ease-in-out;
+  outline: none;
+
+  &:hover,
+  &:focus {
+    color: #00a9ff;
+  }
+
+  &:focus {
+    outline: 2px solid #00a9ff;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+.form-error {
+  font-size: 16px;
+  color: #ff4757;
+  margin: 0;
+  padding: 8px 12px;
+  background: rgba(255, 71, 87, 0.1);
+  border-radius: 8px;
+  border-left: 3px solid #ff4757;
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(255, 71, 87, 0.15);
+  border: 2px solid #ff4757;
+  border-radius: 12px;
+  color: #ff4757;
+  font-size: 18px;
+}
+
+.error-icon {
+  font-size: 24px;
+}
+
+.error-text {
+  flex: 1;
+}
+
+.login-button {
+  width: 100%;
+  padding: 20px;
+  font-size: 22px;
+  font-weight: 700;
+  background: #00a9ff;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  outline: none;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+
+  &:hover:not(:disabled),
+  &:focus:not(:disabled) {
+    background: #0088cc;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 169, 255, 0.4);
+  }
+
+  &:focus:not(:disabled) {
+    outline: 2px solid #00a9ff;
+    outline-offset: 2px;
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    background: #444466;
+    color: #666688;
+    cursor: not-allowed;
+  }
+}
+
+.loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.login-footer {
+  margin-top: 32px;
+  text-align: center;
+  padding-top: 24px;
+  border-top: 1px solid #333355;
+}
+
+.footer-text {
+  font-size: 16px;
+  color: #666688;
+  margin: 8px 0;
+}
+
+// Estado enfocado para navegación por control remoto
+.form-input.focused,
+.password-toggle.focused,
+.login-button.focused {
+  outline: none;
+  box-shadow: 0 0 0 4px #00a9ff, 0 0 20px rgba(0, 169, 255, 0.5);
+  transform: scale(1.02);
+}
+
+// Optimización para TV: sin cursor hover
+.login-container:hover {
+  cursor: default;
+}
+
+.form-input:hover,
+.password-toggle:hover,
+.login-button:hover {
+  cursor: pointer;
+}
+
+// Optimización para pantallas 4K
+@media (min-width: 3840px) {
+  .login-card {
+    padding: 72px;
+    max-width: 700px;
+  }
+
+  .login-title {
+    font-size: 64px;
+  }
+
+  .login-subtitle {
+    font-size: 28px;
+  }
+
+  .form-label {
+    font-size: 24px;
+  }
+
+  .form-input {
+    font-size: 28px;
+    padding: 24px 28px;
+  }
+
+  .login-button {
+    font-size: 32px;
+    padding: 28px;
+  }
+}

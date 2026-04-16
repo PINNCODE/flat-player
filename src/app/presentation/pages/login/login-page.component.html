@@ -1,0 +1,137 @@
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <h1 class="login-title">FlatPlayer</h1>
+      <p class="login-subtitle">Inicia sesión para continuar</p>
+    </div>
+
+    <form 
+      class="login-form" 
+      [formGroup]="loginForm"
+      (ngSubmit)="onSubmit()"
+    >
+      <!-- URL del Servidor -->
+      <div class="form-group">
+        <label for="serverUrl" class="form-label">URL del Servidor</label>
+        <input
+          id="serverUrl"
+          type="text"
+          class="form-input"
+          formControlName="serverUrl"
+          placeholder="https://ejemplo.com"
+          appFocus
+          focusId="login-server-url"
+          [autoFocus]="true"
+          (focus)="onFieldFocus('serverUrl')"
+          [attr.aria-invalid]="hasFieldError('serverUrl')"
+          [attr.aria-describedby]="hasFieldError('serverUrl') ? 'serverUrl-error' : null"
+          appVirtualKeyboard="url"
+          keyboardPlaceholder="https://ejemplo.com"
+        />
+        @if (hasFieldError('serverUrl')) {
+          <p id="serverUrl-error" class="form-error" role="alert">
+            {{ getFieldError('serverUrl') }}
+          </p>
+        }
+      </div>
+
+      <!-- Nombre de Usuario -->
+      <div class="form-group">
+        <label for="username" class="form-label">Usuario</label>
+        <input
+          id="username"
+          type="text"
+          class="form-input"
+          formControlName="username"
+          placeholder="Tu nombre de usuario"
+          appFocus
+          focusId="login-username"
+          (focus)="onFieldFocus('username')"
+          [attr.aria-invalid]="hasFieldError('username')"
+          [attr.aria-describedby]="hasFieldError('username') ? 'username-error' : null"
+          appVirtualKeyboard="text"
+          keyboardPlaceholder="Tu nombre de usuario"
+        />
+        @if (hasFieldError('username')) {
+          <p id="username-error" class="form-error" role="alert">
+            {{ getFieldError('username') }}
+          </p>
+        }
+      </div>
+
+      <!-- Contraseña -->
+      <div class="form-group">
+        <label for="password" class="form-label">Contraseña</label>
+        <div class="password-input-wrapper">
+          <input
+            id="password"
+            [type]="showPassword ? 'text' : 'password'"
+            class="form-input"
+            formControlName="password"
+            placeholder="Tu contraseña"
+            appFocus
+            focusId="login-password"
+            (focus)="onFieldFocus('password')"
+            [attr.aria-invalid]="hasFieldError('password')"
+            [attr.aria-describedby]="hasFieldError('password') ? 'password-error' : null"
+            appVirtualKeyboard="password"
+            keyboardPlaceholder="Tu contraseña"
+          />
+          <button
+            type="button"
+            class="password-toggle"
+            appFocus
+            focusId="login-toggle-password"
+            (click)="togglePasswordVisibility()"
+            [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+          >
+            @if (showPassword) {
+              👁️
+            } @else {
+              👁️‍🗨️
+            }
+          </button>
+        </div>
+        @if (hasFieldError('password')) {
+          <p id="password-error" class="form-error" role="alert">
+            {{ getFieldError('password') }}
+          </p>
+        }
+      </div>
+
+      <!-- Mensaje de Error General -->
+      @if (errorMessage) {
+        <div class="error-message" role="alert">
+          <span class="error-icon">⚠️</span>
+          <span class="error-text">{{ errorMessage }}</span>
+        </div>
+      }
+
+      <!-- Botón de Login -->
+      <button
+        type="submit"
+        class="login-button"
+        [disabled]="loginForm.invalid || isLoading"
+        appFocus
+        focusId="login-submit"
+        [attr.aria-busy]="isLoading"
+      >
+        @if (isLoading) {
+          <span class="loading-spinner"></span>
+          <span class="button-text">Iniciando sesión...</span>
+        } @else {
+          <span class="button-text">Iniciar Sesión</span>
+        }
+      </button>
+    </form>
+
+    <div class="login-footer">
+      <p class="footer-text">
+        Usa las flechas del control remoto para navegar
+      </p>
+      <p class="footer-text">
+        Presiona OK para seleccionar
+      </p>
+    </div>
+  </div>
+</div>
