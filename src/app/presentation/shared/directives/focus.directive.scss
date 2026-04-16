@@ -1,0 +1,74 @@
+/**
+ * Estilos para la directiva de foco visual
+ * Optimizados para Samsung TV con alto contraste y elementos grandes
+ * Cumple con las guidelines de diseño para TV
+ */
+
+/* Estado enfocado - borde brillante con animación suave */
+.focused {
+  outline: none !important;
+  box-shadow: 0 0 0 4px #00a9ff, 0 0 20px rgba(0, 169, 255, 0.5) !important;
+  border-color: #00a9ff !important;
+  transform: scale(1.02);
+  transition: all 0.2s ease-in-out;
+  z-index: 10;
+}
+
+/* Animación de pulso para elementos enfocados */
+@keyframes focusPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 4px #00a9ff, 0 0 20px rgba(0, 169, 255, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 4px #00a9ff, 0 0 30px rgba(0, 169, 255, 0.7);
+  }
+}
+
+.focused {
+  animation: focusPulse 2s ease-in-out infinite;
+}
+
+/* Estilos específicos para diferentes tipos de elementos */
+
+/* Botones */
+button.focused {
+  background-color: rgba(0, 169, 255, 0.2) !important;
+}
+
+/* Items de lista */
+.list-item.focused {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-left: 4px solid #00a9ff;
+}
+
+/* Cards */
+.card.focused {
+  transform: scale(1.05) translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 4px #00a9ff;
+}
+
+/* Inputs */
+input.focused,
+textarea.focused {
+  border-color: #00a9ff !important;
+  background-color: rgba(0, 169, 255, 0.05) !important;
+}
+
+/* Optimización para TV: sin cursor hover */
+*:hover {
+  cursor: default;
+}
+
+/* Solo mostrar cursor pointer en elementos interactivos cuando tienen foco */
+button.focused,
+a.focused,
+[role="button"].focused {
+  cursor: pointer;
+}
+
+/* Asegurar contraste alto para TV */
+@media (min-width: 1920px) {
+  .focused {
+    box-shadow: 0 0 0 6px #00a9ff, 0 0 30px rgba(0, 169, 255, 0.6) !important;
+  }
+}
