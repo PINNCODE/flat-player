@@ -7,15 +7,19 @@ import {
   inject,
   signal,
   viewChild,
+  OnDestroy,
 } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Credentials } from '@core/domain/models/credentials.model';
 import { LoginUseCase } from '@core/application/usecases/login.usecase';
+import { QrLoginFirebaseService } from '@infrastructure/services/qr-login-firebase.service';
+import { environment } from '../../../../environments/environment';
+import QRCode from 'qrcode';
 
-type LoginFocusIndex = 0 | 1 | 2 | 3; // 0=host, 1=username, 2=password, 3=button
+type LoginFocusIndex = 0 | 1 | 2 | 3 | 4; // 0=host, 1=username, 2=password, 3=button, 4=qr-button
 
-const FOCUSABLE_COUNT = 4;
+const FOCUSABLE_COUNT = 5;
 
 @Component({
   selector: 'app-login',
@@ -24,11 +28,18 @@ const FOCUSABLE_COUNT = 4;
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })
-export class Login {
+export class Login implements OnDestroy {
   protected readonly isSubmitting = signal(false);
   protected readonly submitError = signal('');
   protected readonly focusedIndex = signal<LoginFocusIndex>(0);
   protected readonly isEditing = signal(false);
+  protected readonly showQrModal = signal(false);
+  protected readonly qrCodeDataUrl = signal('');
+  protected readonly qrLoading = signal(false);
+
+  private readonly qrLoginService = inject(QrLoginFirebaseService);
+  private readonly QR_BASE_URL = 'https://pinncode.github.io/flat-player/qr-login';
+  private currentSessionId = '';
 
   private readonly hostInputRef = viewChild<ElementRef<HTMLInputElement>>('hostInput');
   private readonly usernameInputRef = viewChild<ElementRef<HTMLInputElement>>('usernameInput');
@@ -82,6 +93,10 @@ export class Login {
     const index = this.focusedIndex();
     if (index === 3) {
       this.onSubmit();
+      return;
+    }
+    if (index === 4) {
+      void this.openQrModal();
       return;
     }
     this.isEditing.set(true);
@@ -153,5 +168,57 @@ export class Login {
     }
 
     return 'No se pudo completar el login.';
+  }
+
+  protected async openQrModal(): Promise<void> {
+    if (this.qrLoading()) return;
+
+    try {
+      this.qrLoading.set(true);
+      this.qrCodeDataUrl.set('');
+
+      this.currentSessionId = await this.qrLoginService.createSession();
+      const url = `${this.QR_BASE_URL}?session=${this.currentSessionId}`;
+
+      const dataUrl = await QRCode.toDataURL(url, {
+        width: 280,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF',
+        },
+      });
+
+      this.qrCodeDataUrl.set(dataUrl);
+      this.showQrModal.set(true);
+
+      this.qrLoginService.listenForCredentials(this.currentSessionId, (credentials) => {
+        this.loginForm.patchValue({
+          host: credentials.host,
+          username: credentials.user,
+          password: credentials.password,
+        });
+        this.closeQrModal();
+        setTimeout(() => this.onSubmit(), 300);
+      });
+    } catch (error) {
+      console.error('[Login] QR Error:', error);
+      this.submitError.set('Error al generar QR. Intenta de nuevo.');
+    } finally {
+      this.qrLoading.set(false);
+    }
+  }
+
+  protected closeQrModal(): void {
+    this.showQrModal.set(false);
+    this.qrCodeDataUrl.set('');
+    if (this.currentSessionId) {
+      this.qrLoginService.cleanupSession(this.currentSessionId);
+      this.currentSessionId = '';
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.qrLoginService.cleanup();
   }
 }

@@ -10,6 +10,7 @@ import { playbackTelemetryProvider } from '@infrastructure/providers/playback-te
 import { tvCatalogProvider } from '@infrastructure/providers/tv-catalog.provider';
 import { epgProvider } from '@infrastructure/providers/epg.provider';
 import { tizenRemoteKeysProvider } from '@infrastructure/providers/tizen-remote-keys.provider';
+import { tizenRemoteInputProvider } from '@infrastructure/providers/tizen-remote-input.provider';
 import { credentialsPersistenceProvider } from '@infrastructure/providers/credentials-persistence.provider';
 
 import { userSettingsProvider } from '@infrastructure/providers/user-settings.provider';
@@ -26,6 +27,7 @@ export const appConfig: ApplicationConfig = {
     tvCatalogProvider,
     epgProvider,
     tizenRemoteKeysProvider,
+    tizenRemoteInputProvider,
     userSettingsProvider,
   ],
 };

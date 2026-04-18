@@ -77,10 +77,51 @@
                 >
                     {{ isSubmitting() ? 'Loading...' : 'Login' }}
                 </button>
+
+                <button
+                    type="button"
+                    class="login-page__qr-button"
+                    [class.login-page__qr-button--nav-focused]="focusedIndex() === 4"
+                    [disabled]="qrLoading()"
+                    (click)="openQrModal()"
+                >
+                    @if (qrLoading()) {
+                        Generando QR...
+                    } @else {
+                        Login con celular
+                    }
+                </button>
+
                 @if (submitError()) {
                     <p class="login-page__form-feedback login-page__form-feedback--error" role="alert">{{ submitError() }}</p>
                 }
             </form>
         </section>
+
+        @if (showQrModal()) {
+            <div class="login-page__qr-modal" role="dialog" aria-modal="true" aria-label="QR Code">
+                <div class="login-page__qr-modal-content">
+                    <h2 class="login-page__qr-modal-title">Escanea con tu celular</h2>
+                    @if (qrCodeDataUrl()) {
+                        <img [src]="qrCodeDataUrl()" alt="QR Code" class="login-page__qr-image">
+                        <p class="login-page__qr-instructions">
+                            Abre la cámara de tu celular y apunta al código QR
+                        </p>
+                    } @else {
+                        <div class="login-page__qr-loading">
+                            <div class="spinner"></div>
+                            <p>Generando código QR...</p>
+                        </div>
+                    }
+                    <button
+                        type="button"
+                        class="login-page__qr-close"
+                        (click)="closeQrModal()"
+                    >
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+        }
     </div>
 </div>

@@ -14,6 +14,11 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./presentation/pages/dashboard/dashboard').then((m) => m.Dashboard),
   },
+  {
+    path: 'qr-login',
+    loadComponent: () =>
+      import('./presentation/pages/qr-login/qr-login').then((m) => m.QrLogin),
+  },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: '**', redirectTo: 'login' },
 ];
