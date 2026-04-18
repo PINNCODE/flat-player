@@ -3,6 +3,8 @@ import { Router, RouterOutlet } from '@angular/router';
 import { AutoLoginUseCase } from '@core/application/usecases/auto-login.usecase';
 import { HttpLoaderService } from '@infrastructure/services/http-loader.service';
 
+export const APP_VERSION = '1.0.0-qr-20240418';
+
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet],
@@ -13,13 +15,14 @@ import { HttpLoaderService } from '@infrastructure/services/http-loader.service'
 export class App implements OnInit {
   protected readonly isHttpLoading = inject(HttpLoaderService).isLoading;
   protected readonly isAutoLogging = signal(true);
+  protected readonly appVersion = APP_VERSION;
 
   private readonly autoLoginUseCase = inject(AutoLoginUseCase);
   private readonly router = inject(Router);
 
   ngOnInit(): void {
-    const currentPath = window.location.pathname;
-    if (currentPath.includes('qr-login')) {
+    const currentHash = window.location.hash;
+    if (currentHash.includes('qr-login')) {
       this.isAutoLogging.set(false);
       return;
     }

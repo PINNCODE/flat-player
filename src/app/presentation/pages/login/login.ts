@@ -38,7 +38,7 @@ export class Login implements OnDestroy {
   protected readonly qrLoading = signal(false);
 
   private readonly qrLoginService = inject(QrLoginFirebaseService);
-  private readonly QR_BASE_URL = 'https://pinncode.github.io/flat-player/qr-login';
+  private readonly QR_BASE_URL = 'https://pinncode.github.io/flat-player/#/qr-login';
   private currentSessionId = '';
 
   private readonly hostInputRef = viewChild<ElementRef<HTMLInputElement>>('hostInput');
@@ -177,8 +177,12 @@ export class Login implements OnDestroy {
       this.qrLoading.set(true);
       this.qrCodeDataUrl.set('');
 
+      console.log('[TV] Creating QR session...');
       this.currentSessionId = await this.qrLoginService.createSession();
+      console.log('[TV] Session created:', this.currentSessionId);
+
       const url = `${this.QR_BASE_URL}?session=${this.currentSessionId}`;
+      console.log('[TV] QR URL:', url);
 
       const dataUrl = await QRCode.toDataURL(url, {
         width: 280,
@@ -191,18 +195,25 @@ export class Login implements OnDestroy {
 
       this.qrCodeDataUrl.set(dataUrl);
       this.showQrModal.set(true);
+      console.log('[TV] QR modal opened, waiting for credentials...');
 
       this.qrLoginService.listenForCredentials(this.currentSessionId, (credentials) => {
+        console.log('[TV] Credentials received!', {
+          host: credentials.host,
+          user: credentials.user,
+          password: '***'
+        });
         this.loginForm.patchValue({
           host: credentials.host,
           username: credentials.user,
           password: credentials.password,
         });
         this.closeQrModal();
+        console.log('[TV] Calling onSubmit...');
         setTimeout(() => this.onSubmit(), 300);
       });
     } catch (error) {
-      console.error('[Login] QR Error:', error);
+      console.error('[TV] QR Error:', error);
       this.submitError.set('Error al generar QR. Intenta de nuevo.');
     } finally {
       this.qrLoading.set(false);

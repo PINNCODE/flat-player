@@ -27,8 +27,15 @@ export class QrLogin implements OnInit {
   private sessionId = '';
 
   ngOnInit(): void {
-    const params = new URLSearchParams(window.location.search);
+    // With hash routing, URL is like: /#/qr-login?session=XXX
+    // We need to extract query params from the hash
+    const hash = window.location.hash;
+    const queryString = hash.split('?')[1] || '';
+    const params = new URLSearchParams(queryString);
     this.sessionId = params.get('session') || '';
+
+    console.log('[Phone] Hash:', hash);
+    console.log('[Phone] Session ID:', this.sessionId);
 
     if (!this.sessionId) {
       this.submitStatus.set('error');
@@ -38,11 +45,13 @@ export class QrLogin implements OnInit {
 
   protected async onSubmit(): Promise<void> {
     if (this.form.invalid || !this.sessionId) {
+      console.log('[Phone] Form invalid or no sessionId');
       this.form.markAllAsTouched();
       return;
     }
 
     const { host, username, password } = this.form.getRawValue();
+    console.log('[Phone] Submitting credentials for session:', this.sessionId);
 
     try {
       this.isSubmitting.set(true);
@@ -54,9 +63,11 @@ export class QrLogin implements OnInit {
         password,
       });
 
+      console.log('[Phone] Credentials sent successfully!');
       this.submitStatus.set('success');
       this.statusMessage.set('¡Credenciales enviadas a la TV!');
     } catch (error) {
+      console.error('[Phone] Send credentials error:', error);
       this.submitStatus.set('error');
       this.statusMessage.set('Error al enviar. Intenta de nuevo.');
     } finally {

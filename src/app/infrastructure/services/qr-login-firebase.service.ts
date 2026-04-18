@@ -14,9 +14,16 @@ export class QrLoginFirebaseService {
   private initialize(): void {
     if (this.app) return;
 
+    console.log('[Firebase] Initializing with config:', {
+      authDomain: 'flat-iptv-player.firebaseapp.com',
+      databaseURL: 'https://flat-iptv-player-default-rtdb.firebaseio.com',
+      projectId: 'flat-iptv-player'
+    });
+
     const firebaseConfig = {
       apiKey: "AIzaSyAL3_g2dVPMtt1kgy6jTcK-Ocvnd7Cwwco",
       authDomain: "flat-iptv-player.firebaseapp.com",
+      databaseURL: "https://flat-iptv-player-default-rtdb.firebaseio.com",
       projectId: "flat-iptv-player",
       storageBucket: "flat-iptv-player.firebasestorage.app",
       messagingSenderId: "801131571482",
@@ -24,15 +31,25 @@ export class QrLoginFirebaseService {
       measurementId: "G-XBRHSLW8JY"
     };
 
-    this.app = initializeApp(firebaseConfig);
-    this.db = getDatabase(this.app);
+    try {
+      this.app = initializeApp(firebaseConfig);
+      this.db = getDatabase(this.app);
+      console.log('[Firebase] Initialized successfully');
+    } catch (error) {
+      console.error('[Firebase] Initialization failed:', error);
+    }
   }
 
   async createSession(): Promise<string> {
     this.initialize();
-    if (!this.db) throw new Error('Firebase not initialized');
+    if (!this.db) {
+      console.error('[Firebase] createSession: DB not initialized');
+      throw new Error('Firebase not initialized');
+    }
 
     const sessionId = this.generateSessionId();
+    console.log('[Firebase] Creating session:', sessionId);
+
     const sessionRef = ref(this.db, `sessions/${sessionId}`);
 
     const sessionData = {
@@ -42,28 +59,51 @@ export class QrLoginFirebaseService {
       credentials: null,
     };
 
-    await set(sessionRef, sessionData);
-    return sessionId;
+    try {
+      await set(sessionRef, sessionData);
+      console.log('[Firebase] Session created:', sessionId);
+      return sessionId;
+    } catch (error) {
+      console.error('[Firebase] createSession failed:', error);
+      throw error;
+    }
   }
 
   listenForCredentials(sessionId: string, callback: (credentials: Credentials) => void): void {
+    console.log('[Firebase] listenForCredentials: Starting listener for session:', sessionId);
+
     this.initialize();
-    if (!this.db) throw new Error('Firebase not initialized');
+    if (!this.db) {
+      console.error('[Firebase] listenForCredentials: DB not initialized');
+      throw new Error('Firebase not initialized');
+    }
 
     this.cleanup();
 
     const sessionRef = ref(this.db, `sessions/${sessionId}`);
+    console.log('[Firebase] Listening at path:', `sessions/${sessionId}`);
 
     this.currentUnsubscribe = () => {
+      console.log('[Firebase] Unsubscribing from session:', sessionId);
       off(sessionRef);
     };
 
     onValue(sessionRef, (snapshot) => {
       const data = snapshot.val();
+      console.log('[Firebase] onValue triggered. Data:', JSON.stringify(data));
 
-      if (!data) return;
+      if (!data) {
+        console.log('[Firebase] No data in snapshot');
+        return;
+      }
 
       if (data.status === 'filled' && data.credentials) {
+        console.log('[Firebase] Credentials received!:', {
+          host: data.credentials.host,
+          user: data.credentials.user,
+          password: '***'
+        });
+
         const credentials: Credentials = {
           host: data.credentials.host || data.credentials.server_url || '',
           user: data.credentials.user || data.credentials.username || '',
@@ -72,17 +112,36 @@ export class QrLoginFirebaseService {
 
         callback(credentials);
         this.cleanupSession(sessionId);
+        return;
       }
 
       if (data.status === 'expired' || (data.expiresAt && Date.now() > data.expiresAt)) {
+        console.log('[Firebase] Session expired');
         this.cleanupSession(sessionId);
+        return;
       }
+
+      if (data.status === 'waiting') {
+        console.log('[Firebase] Session waiting for credentials...');
+      }
+    }, (error) => {
+      console.error('[Firebase] onValue error:', error);
     });
   }
 
   async sendCredentials(sessionId: string, credentials: Credentials): Promise<void> {
+    console.log('[Firebase] sendCredentials: Sending to session:', sessionId);
+    console.log('[Firebase] Credentials:', {
+      host: credentials.host,
+      user: credentials.user,
+      password: '***'
+    });
+
     this.initialize();
-    if (!this.db) throw new Error('Firebase not initialized');
+    if (!this.db) {
+      console.error('[Firebase] sendCredentials: DB not initialized');
+      throw new Error('Firebase not initialized');
+    }
 
     const sessionRef = ref(this.db, `sessions/${sessionId}`);
 
@@ -96,17 +155,25 @@ export class QrLoginFirebaseService {
       filledAt: serverTimestamp(),
     };
 
-    await update(sessionRef, updateData);
+    try {
+      await update(sessionRef, updateData);
+      console.log('[Firebase] Credentials sent successfully to session:', sessionId);
+    } catch (error) {
+      console.error('[Firebase] sendCredentials failed:', error);
+      throw error;
+    }
   }
 
   async cleanupSession(sessionId: string): Promise<void> {
+    console.log('[Firebase] cleanupSession:', sessionId);
     if (!this.db) return;
 
     try {
       const sessionRef = ref(this.db, `sessions/${sessionId}`);
       await remove(sessionRef);
-    } catch {
-      // Ignore cleanup errors
+      console.log('[Firebase] Session removed:', sessionId);
+    } catch (error) {
+      console.error('[Firebase] cleanupSession failed:', error);
     }
 
     this.cleanup();
