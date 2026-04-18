@@ -6,9 +6,9 @@
 sdb kill-server
 sdb start-server
 
-sdb connect 192.168.1.119:26101
+sdb connect 192.168.0.139:26101
 
-sdb disconnect 192.168.1.119:26101
+sdb disconnect 192.168.0.119:26101
 
 sdb devices
 
