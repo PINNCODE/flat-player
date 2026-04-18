@@ -18,6 +18,11 @@ export class App implements OnInit {
   private readonly router = inject(Router);
 
   ngOnInit(): void {
+    const currentPath = window.location.pathname;
+    if (currentPath.includes('qr-login')) {
+      this.isAutoLogging.set(false);
+      return;
+    }
     void this.runAutoLogin();
   }
 
