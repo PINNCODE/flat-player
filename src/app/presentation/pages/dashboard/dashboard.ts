@@ -24,6 +24,13 @@ import { DashboardSettingsPanel } from './settings-panel/dashboard-settings-pane
 
 type OverlayPanel = 'home' | 'menu' | 'categories' | 'channels' | 'search' | 'settings';
 type OverlayTrigger = 'dpad' | 'ok';
+type RemoteAction = 'up' | 'down' | 'left' | 'right' | 'ok' | 'back'
+  | 'chup' | 'chdown'
+  | 'volup' | 'voldown' | 'volmute'
+  | 'playpause' | 'play' | 'stop' | 'fastforward' | 'rewind'
+  | 'info' | 'guide'
+  | 'red' | 'green' | 'yellow' | 'blue'
+  | 'menu' | 'tools';
 
 interface MenuItem {
   readonly id: 'home' | 'guide' | 'search' | 'settings';
@@ -236,9 +243,6 @@ export class Dashboard implements AfterViewInit {
     const action = this.resolveRemoteAction(event.key, event.keyCode);
 
     if (!action) {
-      if (this.debugMode()) {
-        this.showToast(`UNMAPPED KEY // key: ${event.key} | code: ${event.code} | keyCode: ${event.keyCode}`);
-      }
       return;
     }
 
@@ -254,12 +258,87 @@ export class Dashboard implements AfterViewInit {
       return;
     }
 
-    if (!this.overlayVisible()) {
-      this.handleVideoOnlyAction(action);
+    if (action === 'playpause') {
+      this.handlePlayPauseAction();
       return;
     }
 
-    this.handleOverlayAction(action);
+    if (action === 'stop') {
+      this.handleStopAction();
+      return;
+    }
+
+    if (action === 'volup' || action === 'voldown' || action === 'volmute') {
+      this.handleVolumeAction(action);
+      return;
+    }
+
+    if (action === 'info') {
+      this.toggleInfoBar();
+      return;
+    }
+
+    if (action === 'guide') {
+      this.activePanel.set('categories');
+      this.overlayVisible.set(true);
+      return;
+    }
+
+    if (action === 'red' || action === 'green' || action === 'yellow' || action === 'blue') {
+      this.handleColorButton(action);
+      return;
+    }
+
+    if (action === 'menu' || action === 'tools') {
+      this.overlayVisible.set(true);
+      this.activePanel.set('menu');
+      this.focusedMenuIndex.set(0);
+      return;
+    }
+
+    const navigationActions: Array<'up' | 'down' | 'left' | 'right' | 'ok'> = ['up', 'down', 'left', 'right', 'ok'];
+    if (!this.overlayVisible()) {
+      if (navigationActions.includes(action as any)) {
+        this.handleVideoOnlyAction(action as 'up' | 'down' | 'left' | 'right' | 'ok');
+      }
+      return;
+    }
+
+    if (navigationActions.includes(action as any)) {
+      this.handleOverlayAction(action as 'up' | 'down' | 'left' | 'right' | 'ok');
+    }
+  }
+
+  private handlePlayPauseAction(): void {
+    const videoEl = document.querySelector('video');
+    if (videoEl) {
+      this.videoPlaybackFacade.togglePlayPause(videoEl);
+    }
+  }
+
+  private handleStopAction(): void {
+    this.videoPlaybackFacade.stop();
+  }
+
+  private handleVolumeAction(action: 'volup' | 'voldown' | 'volmute'): void {
+    this.showToast(`Volumen: ${action}`);
+  }
+
+  private handleColorButton(action: 'red' | 'green' | 'yellow' | 'blue'): void {
+    switch (action) {
+      case 'red':
+        this.showToast('Boton Rojo - Favoritos');
+        break;
+      case 'green':
+        this.showToast('Boton Verde');
+        break;
+      case 'yellow':
+        this.showToast('Boton Amarillo');
+        break;
+      case 'blue':
+        this.showToast('Boton Azul');
+        break;
+    }
   }
 
   private handleBackAction(): void {
@@ -366,7 +445,7 @@ export class Dashboard implements AfterViewInit {
     }
   }
 
-  private resolveRemoteAction(key: string, keyCode?: number): 'up' | 'down' | 'left' | 'right' | 'ok' | 'back' | 'chup' | 'chdown' | null {
+  private resolveRemoteAction(key: string, keyCode?: number): RemoteAction | null {
     if (keyCode === 427 || key === 'ChannelUp' || key === 'XF86ChannelUp') return 'chup';
     if (keyCode === 428 || key === 'ChannelDown' || key === 'XF86ChannelDown') return 'chdown';
 
@@ -386,6 +465,61 @@ export class Dashboard implements AfterViewInit {
       case 'XF86Back':
       case 'Escape':
         return 'back';
+
+      // Volume
+      case 'VolumeUp':
+      case 'XF86AudioVolumeUp':
+        return 'volup';
+      case 'VolumeDown':
+      case 'XF86AudioVolumeDown':
+        return 'voldown';
+      case 'VolumeMute':
+      case 'XF86AudioMute':
+        return 'volmute';
+
+      // Playback
+      case 'MediaPlayPause':
+      case 'Pause':
+      case 'XF86Pause':
+        return 'playpause';
+      case 'MediaStop':
+      case 'Stop':
+      case 'XF86Stop':
+        return 'stop';
+      case 'MediaPlay':
+      case 'XF86Play':
+        return 'play';
+      case 'MediaFastForward':
+      case 'FastForward':
+      case 'XF86FastForward':
+        return 'fastforward';
+      case 'MediaRewind':
+      case 'Rewind':
+      case 'XF86Rewind':
+        return 'rewind';
+
+      // Info y guía
+      case 'Info':
+        return 'info';
+      case 'Guide':
+        return 'guide';
+
+      // Botones de color
+      case 'ColorF0Red':
+        return 'red';
+      case 'ColorF1Green':
+        return 'green';
+      case 'ColorF2Yellow':
+        return 'yellow';
+      case 'ColorF3Blue':
+        return 'blue';
+
+      // Menú y herramientas
+      case 'Menu':
+        return 'menu';
+      case 'Tools':
+        return 'tools';
+
       default:
         return null;
     }

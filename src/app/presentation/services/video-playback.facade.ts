@@ -57,6 +57,32 @@ export class VideoPlaybackFacade {
     }
   }
 
+  pause(): void {
+    if (this.hls) {
+      this.hls.stopLoad();
+    }
+  }
+
+  resume(): void {
+    if (this.hls) {
+      this.hls.startLoad(-1);
+    }
+  }
+
+  stop(): void {
+    this.destroy();
+  }
+
+  togglePlayPause(videoElement: HTMLVideoElement): void {
+    if (videoElement.paused) {
+      void videoElement.play();
+    } else {
+      videoElement.pause();
+    }
+  }
+
+  readonly playbackStatus = signal<'playing' | 'paused' | 'stopped' | 'buffering'>('stopped');
+
   private attachSource(
     videoElement: HTMLVideoElement,
     sourceUrl: string,
