@@ -9,6 +9,9 @@
       ],
       "@infrastructure/*": [
         "./src/app/infrastructure/*"
+      ],
+      "@presentation/*": [
+        "./src/app/presentation/*"
       ]
     },
     "strict": true,

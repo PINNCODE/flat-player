@@ -1,0 +1,12 @@
+@if (lastKey(); as key) {
+  <div class="remote-debug-overlay">
+    <div class="remote-debug-overlay__content">
+      <div class="remote-debug-overlay__icon">⌨</div>
+      <div class="remote-debug-overlay__key">{{ key.key }}</div>
+      <div class="remote-debug-overlay__details">
+        <span>Code: {{ key.keyCode }}</span>
+        <span>{{ key.time }}</span>
+      </div>
+    </div>
+  </div>
+}
