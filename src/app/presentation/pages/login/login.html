@@ -103,15 +103,27 @@
                 <div class="login-page__qr-modal-content">
                     <h2 class="login-page__qr-modal-title">Escanea con tu celular</h2>
                     @if (qrCodeDataUrl()) {
-                        <img [src]="qrCodeDataUrl()" alt="QR Code" class="login-page__qr-image">
+                        <img [src]="qrCodeDataUrl()" alt="QR Code" 
+                             class="login-page__qr-image"
+                             [class.login-page__qr-image--blurred]="qrTimeRemaining() === 0">
                         @if (qrTimeRemaining() > 0) {
                             <p class="login-page__qr-timer">
+                                <svg class="login-page__qr-timer-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
                                 Expira en {{ formatTime(qrTimeRemaining()) }}
                             </p>
+                            <p class="login-page__qr-timer-desc">{{ getQrTimerDescription() }}</p>
+                        } @else {
+                            <div class="login-page__qr-expired">
+                                <p class="login-page__qr-expired-title">¡Código expirado!</p>
+                                <p class="login-page__qr-expired-subtitle">Genera uno nuevo para continuar</p>
+                                <button type="button" class="login-page__qr-regenerate-btn" (click)="regenerateQr()">
+                                    Generar nuevo código
+                                </button>
+                            </div>
                         }
-                        <p class="login-page__qr-instructions">
-                            Abre la cámara de tu celular y apunta al código QR
-                        </p>
                     } @else {
                         <div class="login-page__qr-loading">
                             <div class="spinner"></div>

@@ -458,6 +458,79 @@ $orb-deep: #0b1220;
     line-height: 1.5;
 }
 
+.login-page__qr-image--blurred {
+    filter: blur(8px);
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.login-page__qr-timer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.login-page__qr-timer-icon {
+    width: 1.2rem;
+    height: 1.2rem;
+}
+
+.login-page__qr-timer-desc {
+    margin: 0.25rem 0 0;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+    text-align: center;
+}
+
+.login-page__qr-expired {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+}
+
+.login-page__qr-expired-title {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.login-page__qr-expired-subtitle {
+    margin: 0;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.login-page__qr-regenerate-btn {
+    margin-top: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 0.5rem;
+    background: #00d2ff;
+    color: #060d1a;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 150ms ease, transform 100ms ease;
+
+    &:hover {
+        background: #00b8e6;
+        transform: translateY(-1px);
+    }
+
+    &:focus-visible {
+        outline: 2px solid #00d2ff;
+        outline-offset: 3px;
+    }
+}
+
 .login-page__qr-loading {
     display: flex;
     flex-direction: column;

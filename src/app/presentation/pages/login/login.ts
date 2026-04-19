@@ -220,8 +220,9 @@ export class Login implements OnDestroy {
       });
 
       this.qrLoginService.listenForExpiration(this.currentSessionId, () => {
-        console.log('[TV] Session expired, regenerating QR...');
-        this.regenerateQr();
+        console.log('[TV] Session expired detected via Firebase');
+        this.stopQrTimer();
+        this.cleanupCurrentSession();
       });
     } catch (error) {
       console.error('[TV] QR Error:', error);
@@ -253,7 +254,7 @@ export class Login implements OnDestroy {
 
       if (remaining <= 0) {
         this.stopQrTimer();
-        this.markSessionExpired();
+        this.cleanupCurrentSession();
       }
     };
 
@@ -268,19 +269,15 @@ export class Login implements OnDestroy {
     }
   }
 
-  private async markSessionExpired(): Promise<void> {
-    if (!this.currentSessionId || !this.qrLoginService) return;
-    try {
-      await this.qrLoginService.markSessionExpired(this.currentSessionId);
-    } catch (error) {
-      console.error('[TV] Failed to mark session expired:', error);
+  private async cleanupCurrentSession(): Promise<void> {
+    if (this.currentSessionId) {
+      await this.qrLoginService.cleanupSession(this.currentSessionId);
+      this.currentSessionId = '';
     }
   }
 
-  private async regenerateQr(): Promise<void> {
-    if (this.currentSessionId) {
-      await this.qrLoginService.cleanupSession(this.currentSessionId);
-    }
+  protected async regenerateQr(): Promise<void> {
+    await this.cleanupCurrentSession();
     await this.openQrModal();
   }
 
@@ -288,6 +285,10 @@ export class Login implements OnDestroy {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  protected getQrTimerDescription(): string {
+    return 'Apunta la cámara de tu celular al código QR para ingresar tus credenciales';
   }
 
   ngOnDestroy(): void {
