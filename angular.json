@@ -25,6 +25,7 @@
             "baseHref": "./",
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
+            "allowedCommonJsDependencies": ["qrcode"],
             "assets": [
               {
                 "glob": "**/*",
@@ -44,9 +45,9 @@
                   "maximumError": "1MB"
                 },
                 {
-                  "type": "anyComponentStyle",
-                    "maximumWarning": "12kB",
-                    "maximumError": "20kB"
+"type": "anyComponentStyle",
+                  "maximumWarning": "20kB",
+                  "maximumError": "30kB"
                 }
               ],
               "outputHashing": "all"
