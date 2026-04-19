@@ -18,6 +18,7 @@ import { GetUserSettingsUseCase } from '@core/application/usecases/get-user-sett
 import { GetHomeRecommendationsUseCase } from '@core/application/usecases/get-home-recommendations.usecase';
 import { HomeRecommendations } from '@core/domain/models/home-recommendations.model';
 import { VideoPlaybackFacade } from '@infrastructure/services/video-playback.facade';
+import { VIDEO_PLAYBACK_PORT } from '@core/domain/ports/video-playback.port';
 import { environment } from '../../../../environments/environment';
 import { DashboardLogoutDialog } from './logout-dialog/dashboard-logout-dialog';
 import { DashboardSettingsPanel } from './settings-panel/dashboard-settings-panel';
@@ -181,7 +182,7 @@ export class Dashboard implements AfterViewInit {
   private readonly getUserSettingsUseCase = inject(GetUserSettingsUseCase);
 
   private readonly getHomeRecommendationsUseCase = inject(GetHomeRecommendationsUseCase);
-  private readonly videoPlaybackFacade = inject(VideoPlaybackFacade);
+  private readonly videoPlaybackFacade = inject(VIDEO_PLAYBACK_PORT);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 

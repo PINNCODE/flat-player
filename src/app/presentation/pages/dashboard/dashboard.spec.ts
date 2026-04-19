@@ -11,6 +11,7 @@ import { EPG_REPOSITORY } from '@core/domain/ports/epg.repository';
 import { TvCatalogMockAdapter } from '@infrastructure/adapters/mock/tv-catalog-mock.adapter';
 import { Dashboard } from './dashboard';
 import { VideoPlaybackFacade } from '@infrastructure/services/video-playback.facade';
+import { VIDEO_PLAYBACK_PORT } from '@core/domain/ports/video-playback.port';
 import { vi } from 'vitest';
 
 interface LogoutUseCaseMock {
@@ -87,7 +88,7 @@ describe('Dashboard', () => {
         { provide: TrackPlaybackErrorUseCase, useValue: trackPlaybackErrorUseCaseMock },
         { provide: GetChannelEpgUseCase, useValue: getChannelEpgUseCaseMock },
         { provide: GetUserInfoUseCase, useValue: getUserInfoUseCaseMock },
-        { provide: VideoPlaybackFacade, useValue: videoPlaybackFacadeMock },
+        { provide: VIDEO_PLAYBACK_PORT, useValue: videoPlaybackFacadeMock },
         { provide: EPG_REPOSITORY, useValue: { getChannelGuide: vi.fn(() => Promise.resolve([])) } },
       ],
     }).compileComponents();
