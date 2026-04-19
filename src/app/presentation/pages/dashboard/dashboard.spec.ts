@@ -10,7 +10,6 @@ import { TV_CATALOG_REPOSITORY } from '@core/domain/ports/tv-catalog.repository'
 import { EPG_REPOSITORY } from '@core/domain/ports/epg.repository';
 import { TvCatalogMockAdapter } from '@infrastructure/adapters/mock/tv-catalog-mock.adapter';
 import { Dashboard } from './dashboard';
-import { VideoPlaybackFacade } from '@infrastructure/services/video-playback.facade';
 import { VIDEO_PLAYBACK_PORT } from '@core/domain/ports/video-playback.port';
 import { vi } from 'vitest';
 
@@ -22,7 +21,7 @@ interface ResolveStreamUrlUseCaseMock {
   execute: ReturnType<typeof vi.fn>;
 }
 
-interface VideoPlaybackFacadeMock {
+interface VideoPlaybackPortMock {
   start: ReturnType<typeof vi.fn>;
   destroy: ReturnType<typeof vi.fn>;
 }
@@ -40,7 +39,7 @@ describe('Dashboard', () => {
   let fixture: ComponentFixture<Dashboard>;
   let logoutUseCaseMock: LogoutUseCaseMock;
   let resolveStreamUrlUseCaseMock: ResolveStreamUrlUseCaseMock;
-  let videoPlaybackFacadeMock: VideoPlaybackFacadeMock;
+  let videoPlaybackPortMock: VideoPlaybackPortMock;
   let trackPlaybackErrorUseCaseMock: TrackPlaybackErrorUseCaseMock;
   let getChannelEpgUseCaseMock: GetChannelEpgUseCaseMock;
   let getUserInfoUseCaseMock: { execute: ReturnType<typeof vi.fn> };
@@ -58,7 +57,7 @@ describe('Dashboard', () => {
       })),
     };
 
-    videoPlaybackFacadeMock = {
+    videoPlaybackPortMock = {
       start: vi.fn(),
       destroy: vi.fn(),
     };
@@ -88,7 +87,7 @@ describe('Dashboard', () => {
         { provide: TrackPlaybackErrorUseCase, useValue: trackPlaybackErrorUseCaseMock },
         { provide: GetChannelEpgUseCase, useValue: getChannelEpgUseCaseMock },
         { provide: GetUserInfoUseCase, useValue: getUserInfoUseCaseMock },
-        { provide: VIDEO_PLAYBACK_PORT, useValue: videoPlaybackFacadeMock },
+        { provide: VIDEO_PLAYBACK_PORT, useValue: videoPlaybackPortMock },
         { provide: EPG_REPOSITORY, useValue: { getChannelGuide: vi.fn(() => Promise.resolve([])) } },
       ],
     }).compileComponents();

@@ -17,7 +17,6 @@ import { GetUserSettingsUseCase } from '@core/application/usecases/get-user-sett
 
 import { GetHomeRecommendationsUseCase } from '@core/application/usecases/get-home-recommendations.usecase';
 import { HomeRecommendations } from '@core/domain/models/home-recommendations.model';
-import { VideoPlaybackFacade } from '@infrastructure/services/video-playback.facade';
 import { VIDEO_PLAYBACK_PORT } from '@core/domain/ports/video-playback.port';
 import { environment } from '../../../../environments/environment';
 import { DashboardLogoutDialog } from './logout-dialog/dashboard-logout-dialog';
@@ -110,10 +109,10 @@ export class Dashboard implements AfterViewInit {
   protected readonly debugBufferAhead = signal(0);
 
   // Valores raw del facade usados por el effect() para detección de cambios.
-  private readonly rawLiveEdge = computed(() => this.videoPlaybackFacade.liveEdgeSeconds());
-  private readonly rawCurrentTime = computed(() => this.videoPlaybackFacade.currentTimeSeconds());
-  private readonly rawLatency = computed(() => this.videoPlaybackFacade.latencySeconds());
-  private readonly rawBufferAhead = computed(() => this.videoPlaybackFacade.bufferAheadSeconds());
+  private readonly rawLiveEdge = computed(() => this.videoPlaybackPort.liveEdgeSeconds());
+  private readonly rawCurrentTime = computed(() => this.videoPlaybackPort.currentTimeSeconds());
+  private readonly rawLatency = computed(() => this.videoPlaybackPort.latencySeconds());
+  private readonly rawBufferAhead = computed(() => this.videoPlaybackPort.bufferAheadSeconds());
 
   protected readonly focusedCategory = computed(
     () => this.categories()[this.focusedCategoryIndex()] ?? null,
@@ -182,7 +181,7 @@ export class Dashboard implements AfterViewInit {
   private readonly getUserSettingsUseCase = inject(GetUserSettingsUseCase);
 
   private readonly getHomeRecommendationsUseCase = inject(GetHomeRecommendationsUseCase);
-  private readonly videoPlaybackFacade = inject(VIDEO_PLAYBACK_PORT);
+  private readonly videoPlaybackPort = inject(VIDEO_PLAYBACK_PORT);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -195,7 +194,7 @@ export class Dashboard implements AfterViewInit {
       this.clearInfoBarTimeout();
       this.clearToastTimeout();
       this.clearVideoMetaTimeout();
-      this.videoPlaybackFacade.destroy();
+      this.videoPlaybackPort.destroy();
     });
 
     // Effect throttleado: actualiza los signals de debug solo cuando los valores
@@ -313,12 +312,12 @@ export class Dashboard implements AfterViewInit {
   private handlePlayPauseAction(): void {
     const videoEl = document.querySelector('video');
     if (videoEl) {
-      this.videoPlaybackFacade.togglePlayPause(videoEl);
+      this.videoPlaybackPort.togglePlayPause(videoEl);
     }
   }
 
   private handleStopAction(): void {
-    this.videoPlaybackFacade.stop();
+    this.videoPlaybackPort.stop();
   }
 
   private handleVolumeAction(action: 'volup' | 'voldown' | 'volmute'): void {
@@ -983,7 +982,7 @@ export class Dashboard implements AfterViewInit {
   }
 
   private logout(): void {
-    this.videoPlaybackFacade.destroy();
+    this.videoPlaybackPort.destroy();
     this.logoutUseCase.execute();
     this.overlayVisible.set(false);
     this.infoBarVisible.set(false);
@@ -1018,7 +1017,7 @@ export class Dashboard implements AfterViewInit {
 
     this.streamPlaybackError.set('');
 
-    this.videoPlaybackFacade.start(
+    this.videoPlaybackPort.start(
       videoElement,
       resolved.primaryUrl,
       resolved.fallbackUrl,
