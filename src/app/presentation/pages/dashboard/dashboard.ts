@@ -17,7 +17,7 @@ import { GetUserSettingsUseCase } from '@core/application/usecases/get-user-sett
 
 import { GetHomeRecommendationsUseCase } from '@core/application/usecases/get-home-recommendations.usecase';
 import { HomeRecommendations } from '@core/domain/models/home-recommendations.model';
-import { VideoPlaybackFacade } from '../../services/video-playback.facade';
+import { VideoPlaybackFacade } from '@infrastructure/services/video-playback.facade';
 import { environment } from '../../../../environments/environment';
 import { DashboardLogoutDialog } from './logout-dialog/dashboard-logout-dialog';
 import { DashboardSettingsPanel } from './settings-panel/dashboard-settings-panel';

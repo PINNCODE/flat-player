@@ -14,6 +14,7 @@ import { tizenRemoteInputProvider } from '@infrastructure/providers/tizen-remote
 import { credentialsPersistenceProvider } from '@infrastructure/providers/credentials-persistence.provider';
 
 import { userSettingsProvider } from '@infrastructure/providers/user-settings.provider';
+import { videoPlaybackProvider } from '@infrastructure/providers/video-playback.provider';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -29,5 +30,6 @@ export const appConfig: ApplicationConfig = {
     tizenRemoteKeysProvider,
     tizenRemoteInputProvider,
     userSettingsProvider,
+    videoPlaybackProvider,
   ],
 };

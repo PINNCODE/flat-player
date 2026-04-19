@@ -42,6 +42,7 @@ export class Login implements OnDestroy {
   private readonly QR_BASE_URL = 'https://pinncode.github.io/flat-player/#/qr-login';
   private currentSessionId = '';
   private qrCountdownInterval: ReturnType<typeof setInterval> | null = null;
+  private qrSubmitTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private sessionCreatedAt = 0;
 
   private readonly hostInputRef = viewChild<ElementRef<HTMLInputElement>>('hostInput');
@@ -216,7 +217,7 @@ export class Login implements OnDestroy {
         });
         this.closeQrModal();
         console.log('[TV] Calling onSubmit...');
-        setTimeout(() => this.onSubmit(), 300);
+        this.qrSubmitTimeoutId = setTimeout(() => this.onSubmit(), 300);
       });
 
       this.qrLoginService.listenForExpiration(this.currentSessionId, () => {
@@ -293,5 +294,13 @@ export class Login implements OnDestroy {
 
   ngOnDestroy(): void {
     this.qrLoginService.cleanup();
+    if (this.qrSubmitTimeoutId) {
+      clearTimeout(this.qrSubmitTimeoutId);
+      this.qrSubmitTimeoutId = null;
+    }
+    if (this.qrCountdownInterval) {
+      clearInterval(this.qrCountdownInterval);
+      this.qrCountdownInterval = null;
+    }
   }
 }

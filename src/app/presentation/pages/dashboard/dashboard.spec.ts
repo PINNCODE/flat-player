@@ -10,7 +10,7 @@ import { TV_CATALOG_REPOSITORY } from '@core/domain/ports/tv-catalog.repository'
 import { EPG_REPOSITORY } from '@core/domain/ports/epg.repository';
 import { TvCatalogMockAdapter } from '@infrastructure/adapters/mock/tv-catalog-mock.adapter';
 import { Dashboard } from './dashboard';
-import { VideoPlaybackFacade } from '../../services/video-playback.facade';
+import { VideoPlaybackFacade } from '@infrastructure/services/video-playback.facade';
 import { vi } from 'vitest';
 
 interface LogoutUseCaseMock {
