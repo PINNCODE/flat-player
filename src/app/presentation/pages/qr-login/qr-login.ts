@@ -23,6 +23,7 @@ export class QrLogin implements OnInit {
   protected readonly isSubmitting = signal(false);
   protected readonly submitStatus = signal<'idle' | 'success' | 'error'>('idle');
   protected readonly statusMessage = signal('');
+  protected readonly successView = signal(false);
 
   private sessionId = '';
 
@@ -66,6 +67,7 @@ export class QrLogin implements OnInit {
       console.log('[Phone] Credentials sent successfully!');
       this.submitStatus.set('success');
       this.statusMessage.set('¡Credenciales enviadas a la TV!');
+      this.successView.set(true);
     } catch (error) {
       console.error('[Phone] Send credentials error:', error);
       this.submitStatus.set('error');
