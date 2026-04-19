@@ -104,6 +104,11 @@
                     <h2 class="login-page__qr-modal-title">Escanea con tu celular</h2>
                     @if (qrCodeDataUrl()) {
                         <img [src]="qrCodeDataUrl()" alt="QR Code" class="login-page__qr-image">
+                        @if (qrTimeRemaining() > 0) {
+                            <p class="login-page__qr-timer">
+                                Expira en {{ formatTime(qrTimeRemaining()) }}
+                            </p>
+                        }
                         <p class="login-page__qr-instructions">
                             Abre la cámara de tu celular y apunta al código QR
                         </p>

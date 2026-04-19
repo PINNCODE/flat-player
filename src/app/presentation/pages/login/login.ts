@@ -36,10 +36,13 @@ export class Login implements OnDestroy {
   protected readonly showQrModal = signal(false);
   protected readonly qrCodeDataUrl = signal('');
   protected readonly qrLoading = signal(false);
+  protected readonly qrTimeRemaining = signal(0);
 
   private readonly qrLoginService = inject(QrLoginFirebaseService);
   private readonly QR_BASE_URL = 'https://pinncode.github.io/flat-player/#/qr-login';
   private currentSessionId = '';
+  private qrCountdownInterval: ReturnType<typeof setInterval> | null = null;
+  private sessionCreatedAt = 0;
 
   private readonly hostInputRef = viewChild<ElementRef<HTMLInputElement>>('hostInput');
   private readonly usernameInputRef = viewChild<ElementRef<HTMLInputElement>>('usernameInput');
@@ -179,6 +182,7 @@ export class Login implements OnDestroy {
 
       console.log('[TV] Creating QR session...');
       this.currentSessionId = await this.qrLoginService.createSession();
+      this.sessionCreatedAt = Date.now();
       console.log('[TV] Session created:', this.currentSessionId);
 
       const url = `${this.QR_BASE_URL}?session=${this.currentSessionId}`;
@@ -195,6 +199,7 @@ export class Login implements OnDestroy {
 
       this.qrCodeDataUrl.set(dataUrl);
       this.showQrModal.set(true);
+      this.startQrTimer();
       console.log('[TV] QR modal opened, waiting for credentials...');
 
       this.qrLoginService.listenForCredentials(this.currentSessionId, (credentials) => {
@@ -203,6 +208,7 @@ export class Login implements OnDestroy {
           user: credentials.user,
           password: '***'
         });
+        this.stopQrTimer();
         this.loginForm.patchValue({
           host: credentials.host,
           username: credentials.user,
@@ -211,6 +217,11 @@ export class Login implements OnDestroy {
         this.closeQrModal();
         console.log('[TV] Calling onSubmit...');
         setTimeout(() => this.onSubmit(), 300);
+      });
+
+      this.qrLoginService.listenForExpiration(this.currentSessionId, () => {
+        console.log('[TV] Session expired, regenerating QR...');
+        this.regenerateQr();
       });
     } catch (error) {
       console.error('[TV] QR Error:', error);
@@ -223,10 +234,60 @@ export class Login implements OnDestroy {
   protected closeQrModal(): void {
     this.showQrModal.set(false);
     this.qrCodeDataUrl.set('');
+    this.stopQrTimer();
     if (this.currentSessionId) {
       this.qrLoginService.cleanupSession(this.currentSessionId);
       this.currentSessionId = '';
     }
+  }
+
+  private startQrTimer(): void {
+    this.stopQrTimer();
+    const expiryMs = 5 * 60 * 1000;
+    const updateInterval = 1000;
+
+    const tick = () => {
+      const elapsed = Date.now() - this.sessionCreatedAt;
+      const remaining = Math.max(0, Math.ceil((expiryMs - elapsed) / 1000));
+      this.qrTimeRemaining.set(remaining);
+
+      if (remaining <= 0) {
+        this.stopQrTimer();
+        this.markSessionExpired();
+      }
+    };
+
+    tick();
+    this.qrCountdownInterval = setInterval(tick, updateInterval);
+  }
+
+  private stopQrTimer(): void {
+    if (this.qrCountdownInterval) {
+      clearInterval(this.qrCountdownInterval);
+      this.qrCountdownInterval = null;
+    }
+  }
+
+  private async markSessionExpired(): Promise<void> {
+    if (!this.currentSessionId || !this.qrLoginService) return;
+    try {
+      await this.qrLoginService.markSessionExpired(this.currentSessionId);
+    } catch (error) {
+      console.error('[TV] Failed to mark session expired:', error);
+    }
+  }
+
+  private async regenerateQr(): Promise<void> {
+    if (this.currentSessionId) {
+      await this.qrLoginService.cleanupSession(this.currentSessionId);
+    }
+    await this.openQrModal();
+  }
+
+  formatTime(seconds: number): string {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   }
 
   ngOnDestroy(): void {

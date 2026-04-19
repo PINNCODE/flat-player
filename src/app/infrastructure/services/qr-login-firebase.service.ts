@@ -129,6 +129,47 @@ export class QrLoginFirebaseService {
     });
   }
 
+  async markSessionExpired(sessionId: string): Promise<void> {
+    console.log('[Firebase] markSessionExpired:', sessionId);
+    if (!this.db) return;
+
+    try {
+      const sessionRef = ref(this.db, `sessions/${sessionId}`);
+      await update(sessionRef, { status: 'expired' });
+      console.log('[Firebase] Session marked as expired:', sessionId);
+    } catch (error) {
+      console.error('[Firebase] markSessionExpired failed:', error);
+    }
+  }
+
+  listenForExpiration(sessionId: string, callback: () => void): void {
+    console.log('[Firebase] listenForExpiration: Starting listener for session:', sessionId);
+
+    this.initialize();
+    if (!this.db) {
+      console.error('[Firebase] listenForExpiration: DB not initialized');
+      return;
+    }
+
+    const sessionRef = ref(this.db, `sessions/${sessionId}`);
+
+    const unsubscribe = onValue(sessionRef, (snapshot) => {
+      const data = snapshot.val();
+      if (!data) return;
+
+      const isExpired = data.status === 'expired' || (data.expiresAt && Date.now() > data.expiresAt);
+      if (isExpired) {
+        console.log('[Firebase] Session expired detected via listener');
+        callback();
+        off(sessionRef);
+      }
+    }, (error) => {
+      console.error('[Firebase] onValue error:', error);
+    });
+
+    this.currentUnsubscribe = unsubscribe;
+  }
+
   async sendCredentials(sessionId: string, credentials: Credentials): Promise<void> {
     console.log('[Firebase] sendCredentials: Sending to session:', sessionId);
     console.log('[Firebase] Credentials:', {
