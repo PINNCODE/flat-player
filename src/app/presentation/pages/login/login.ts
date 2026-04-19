@@ -62,7 +62,7 @@ export class Login implements OnDestroy {
   @HostListener('window:keydown', ['$event'])
   protected onRemoteKeydown(event: KeyboardEvent): void {
     if (this.isEditing()) {
-      if (event.key === 'XF86Back' || event.key === 'Escape') {
+      if (event.key === 'XF86Back') {
         event.preventDefault();
         this.deactivateInput();
       }
