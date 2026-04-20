@@ -2,13 +2,12 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { Router, RouterOutlet } from '@angular/router';
 import { AutoLoginUseCase } from '@core/application/usecases/auto-login.usecase';
 import { HttpLoaderService } from '@infrastructure/services/http-loader.service';
-import { RemoteDebugOverlayComponent } from '@presentation/components/remote-debug-overlay/remote-debug-overlay';
 
 export const APP_VERSION = '1.0.0-qr-20240418';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RemoteDebugOverlayComponent],
+  imports: [RouterOutlet],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.html',
   styleUrl: './app.scss'
