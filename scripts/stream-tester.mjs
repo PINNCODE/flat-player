@@ -1,23 +1,20 @@
 /**
  * Stream Stability Tester
  *
- * Automated testing tool to measure HLS stream stability with real credentials.
- * Monitors: latency, buffer, stalls, audio drift, errors.
+ * Tests HLS stream stability by downloading segments and measuring latency.
+ * Works without needing the channel list API - uses direct stream URLs.
  *
  * Usage:
- *   node scripts/stream-tester.mjs                    # Interactive channel selection
- *   node scripts/stream-tester.mjs --channel "ESPN"  # Select channel by name
- *   node scripts/stream-tester.mjs --random            # Random channel
- *   node scripts/stream-tester.mjs --duration 120      # Run for 120 seconds (default: 60)
+ *   node scripts/stream-tester.mjs                           # Test default channel
+ *   node scripts/stream-tester.mjs --stream-id 423307        # Specific stream ID
+ *   node scripts/stream-tester.mjs --duration 120            # Run for 120 seconds
+ *   node scripts/stream-tester.mjs --samples 10              # Collect 10 segment samples
  */
 
-import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { createRequire } from 'module';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-const Hls = require('hls.js');
+import { existsSync, mkdirSync, writeFileSync } from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -27,559 +24,441 @@ const CREDENTIALS = {
   host: 'https://ftvpro.net:8443',
   user: 'Trujillo2303',
   password: 'SAFJC4xWVRp5',
+  defaultStreamId: '423307', // Known working stream
 };
 
-// ── Test Configuration ─────────────────────────────────────────────────────────
+// ── Configuration ────────────────────────────────────────────────────────────────
 const CONFIG = {
   testDurationSeconds: 60,
-  samplingIntervalMs: 1000,
-  stallThresholdMs: 500,
-  maxLatencyThreshold: 90,
-  maxBufferStalls: 5,
+  segmentSamples: 10,
+  segmentRetryAttempts: 3,
+  timeout: 15000,
+  streamId: '423307', // Known working stream ID
 };
 
-// ── State ─────────────────────────────────────────────────────────────────────
-let hls = null;
-let videoElement = null;
-let testStartTime = 0;
-let isTestRunning = false;
-
+// ── State ──────────────────────────────────────────────────────────────────────
 const metrics = {
-  samples: [],
-  stalls: [],
-  errors: [],
+  segmentTimes: [],
+  stallCount: 0,
+  errorCount: 0,
   startTime: 0,
   endTime: 0,
-  channelName: '',
-  streamUrl: '',
   config: { ...CONFIG },
 };
 
-// ── API Functions ─────────────────────────────────────────────────────────────
-async function login() {
-  console.log('\n🔐 Authenticating with IPTV server...');
-  const params = new URLSearchParams({
-    username: CREDENTIALS.user,
-    password: CREDENTIALS.password,
+// ── Stream URL ─────────────────────────────────────────────────────────────────
+function getStreamUrl(streamId) {
+  return `${CREDENTIALS.host}/live/${CREDENTIALS.user}/${CREDENTIALS.password}/${streamId}.m3u8`;
+}
+
+function getCurrentStreamUrl() {
+  return `${CREDENTIALS.host}/live/${CREDENTIALS.user}/${CREDENTIALS.password}/${CONFIG.streamId}.m3u8`;
+}
+
+// ── Fetch with headers (required by server) ───────────────────────────────────
+async function fetchWithHeaders(url) {
+  const response = await fetch(url, {
+    headers: {
+      'Accept': '*/*',
+      'Referer': 'https://pinncode.github.io/',
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+    },
+    signal: AbortSignal.timeout(CONFIG.timeout),
   });
-
-  const response = await fetch(`${CREDENTIALS.host}/player_api.php`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: params.toString(),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Login failed: ${response.status}`);
-  }
-
-  const data = await response.json();
-  if (data.user_info?.auth) {
-    console.log('✅ Authentication successful');
-    return data;
-  }
-  throw new Error('Authentication failed: invalid credentials');
+  return response;
 }
 
-async function getLiveCategories(authData) {
-  console.log('\n📺 Fetching live categories...');
-  const params = new URLSearchParams({
-    username: CREDENTIALS.user,
-    password: CREDENTIALS.password,
-    action: 'get_live_categories',
-  });
+// ── Analyze Manifest ─────────────────────────────────────────────────────────────
+async function analyzeManifest(streamUrl) {
+  console.log('\n📋 Fetching HLS manifest...');
 
-  const response = await fetch(`${CREDENTIALS.host}/player_api.php?${params}`);
-  const categories = await response.json();
-  console.log(`   Found ${categories.length} categories`);
-  return categories;
-}
+  const start = Date.now();
+  const response = await fetchWithHeaders(streamUrl);
+  const manifest = await response.text();
+  const fetchTime = Date.now() - start;
 
-async function getLiveStreams() {
-  console.log('\n📡 Fetching live streams...');
-  const params = new URLSearchParams({
-    username: CREDENTIALS.user,
-    password: CREDENTIALS.password,
-    action: 'get_live_streams',
-  });
+  console.log(`   Manifest fetched in ${fetchTime}ms`);
+  console.log(`   HTTP Status: ${response.status}`);
 
-  const response = await fetch(`${CREDENTIALS.host}/player_api.php?${params}`);
-  const streams = await response.json();
-  console.log(`   Found ${streams.length} streams`);
-  return streams;
-}
+  const lines = manifest.split('\n');
+  let targetDuration = 10;
+  let mediaSequence = 0;
+  let segmentCount = 0;
+  const segments = [];
+  const baseUrl = streamUrl.split('/').slice(0, -1).join('/');
 
-async function getStreamUrl(streamId) {
-  const params = new URLSearchParams({
-    username: CREDENTIALS.user,
-    password: CREDENTIALS.password,
-    stream: streamId,
-    type: 'live',
-  });
-
-  const response = await fetch(`${CREDENTIALS.host}/player_api.php?${params}`);
-  const data = await response.json();
-  return data.stream_link || null;
-}
-
-// ── Video Element Setup ───────────────────────────────────────────────────────
-function createVideoElement() {
-  const video = document.createElement('video');
-  video.style.position = 'fixed';
-  video.style.top = '0';
-  video.style.left = '0';
-  video.style.width = '320px';
-  video.style.height = '180px';
-  video.style.backgroundColor = 'black';
-  video.style.zIndex = '9999';
-  video.style.opacity = '0.7';
-  video.controls = false;
-  video.muted = false;
-  document.body.appendChild(video);
-  return video;
-}
-
-// ── Metrics Collection ────────────────────────────────────────────────────────
-function collectSample() {
-  if (!videoElement || !isTestRunning) return;
-
-  const currentTime = videoElement.currentTime;
-  const bufferedEnd = getBufferEnd(videoElement);
-  const liveEdge = getLiveEdge();
-  const latency = liveEdge - currentTime;
-  const bufferAhead = bufferedEnd - currentTime;
-
-  const sample = {
-    timestamp: Date.now() - metrics.startTime,
-    currentTime: Number(currentTime.toFixed(2)),
-    liveEdge: Number(liveEdge.toFixed(2)),
-    latency: Number(latency.toFixed(2)),
-    bufferAhead: Number(bufferAhead.toFixed(2)),
-    playbackRate: videoElement.playbackRate,
-    paused: videoElement.paused,
-    readyState: videoElement.readyState,
-  };
-
-  metrics.samples.push(sample);
-}
-
-function getBufferEnd(video) {
-  if (video.buffered.length === 0) return video.currentTime;
-  return video.buffered.end(video.buffered.length - 1);
-}
-
-function getLiveEdge() {
-  if (videoElement.seekable.length > 0) {
-    return videoElement.seekable.end(videoElement.seekable.length - 1);
-  }
-  return videoElement.currentTime + 30;
-}
-
-function detectStall() {
-  if (!videoElement || videoElement.paused) return;
-
-  const lastSample = metrics.samples[metrics.samples.length - 1];
-  if (!lastSample) return;
-
-  const timeSinceStart = Date.now() - metrics.startTime;
-  if (timeSinceStart < 2000) return; // Ignore first 2 seconds
-
-  const currentTime = videoElement.currentTime;
-  const timeDelta = currentTime - lastSample.currentTime;
-
-  if (timeDelta < 0.1 && !videoElement.paused) {
-    const stallEvent = {
-      timestamp: timeSinceStart,
-      currentTime: currentTime,
-      liveEdge: lastSample.liveEdge,
-      latency: lastSample.latency,
-      bufferAhead: lastSample.bufferAhead,
-    };
-
-    const lastStall = metrics.stalls[metrics.stalls.length - 1];
-    if (!lastStall || timeSinceStart - lastStall.timestamp > 2000) {
-      metrics.stalls.push(stallEvent);
-      console.log(`   ⚠️  STALL detected at ${(timeSinceStart / 1000).toFixed(1)}s - Latency: ${lastSample.latency.toFixed(1)}s, Buffer: ${lastSample.bufferAhead.toFixed(1)}s`);
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('#EXT-X-TARGETDURATION:')) {
+      targetDuration = parseInt(trimmed.split(':')[1], 10);
+      console.log(`   Target Duration: ${targetDuration}s`);
+    }
+    if (trimmed.startsWith('#EXT-X-MEDIA-SEQUENCE:')) {
+      mediaSequence = parseInt(trimmed.split(':')[1], 10);
+      console.log(`   Media Sequence: ${mediaSequence}`);
+    }
+    if (trimmed.endsWith('.ts') || trimmed.includes('.ts?')) {
+      segmentCount++;
+      const url = trimmed.startsWith('http')
+        ? trimmed
+        : `${streamUrl.split('/').slice(0, -1).join('/')}/${trimmed}`;
+      segments.push(url);
     }
   }
+
+  console.log(`   Segments in manifest: ${segmentCount}`);
+  console.log(`   First few segments: ${segments.slice(0, 3).map(s => s.split('/').pop()).join(', ')}...`);
+
+  return {
+    targetDuration,
+    mediaSequence,
+    segmentCount,
+    segments,
+    fetchTime,
+    baseUrl,
+  };
 }
 
-// ── HLS Setup ─────────────────────────────────────────────────────────────────
-function setupHls(streamUrl) {
-  return new Promise((resolve, reject) => {
-    hls = new Hls({
-      enableWorker: true,
-      lowLatencyMode: false,
-      liveSyncDuration: 40,
-      liveMaxLatencyDuration: 60,
-      liveDurationInfinity: true,
-      maxBufferLength: 40,
-      maxMaxBufferLength: 60,
-      backBufferLength: 30,
-      maxLiveSyncPlaybackRate: 1.05,
-    });
+// ── Measure Segment Download ─────────────────────────────────────────────────────
+async function measureSegment(segmentUrl, index) {
+  const timings = [];
 
-    hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
-      console.log(`\n🎬 HLS Manifest loaded: ${data.levels.length} quality levels`);
-      resolve();
-    });
+  for (let attempt = 1; attempt <= CONFIG.segmentRetryAttempts; attempt++) {
+    const start = Date.now();
+    try {
+      const response = await fetchWithHeaders(segmentUrl);
+      const end = Date.now();
+      const downloadTime = end - start;
+      const size = parseInt(response.headers.get('content-length') || '0', 10);
 
-    hls.on(Hls.Events.LEVEL_SWITCHED, (event, data) => {
-      console.log(`   📊 Level switched to: ${data.level}`);
-    });
-
-    hls.on(Hls.Events.FRAG_BUFFERED, (event, data) => {
-      collectSample();
-    });
-
-    hls.on(Hls.Events.ERROR, (event, data) => {
-      const error = {
+      const timing = {
+        index,
+        attempt,
+        success: true,
+        latency: downloadTime,
+        size,
+        speed: size > 0 ? (size / (downloadTime / 1000) / 1024).toFixed(1) : 0,
         timestamp: Date.now() - metrics.startTime,
-        fatal: data.fatal,
-        type: data.type,
-        details: data.details,
       };
-      metrics.errors.push(error);
-      console.log(`   ❌ HLS Error [${data.details}]: ${data.reason}`);
 
-      if (data.fatal) {
-        console.log('   🔥 Fatal error, stopping test');
-        reject(new Error(`Fatal HLS error: ${data.details}`));
+      timings.push(timing);
+      console.log(`   Segment ${index + 1}: ${downloadTime}ms | ${(size / 1024).toFixed(1)}KB | ${timing.speed} KB/s`);
+      return timing;
+    } catch (error) {
+      console.log(`   Segment ${index + 1} (attempt ${attempt}): ❌ ${error.message}`);
+      timings.push({
+        index,
+        attempt,
+        success: false,
+        error: error.message,
+        latency: Date.now() - start,
+        timestamp: Date.now() - metrics.startTime,
+      });
+
+      if (attempt < CONFIG.segmentRetryAttempts) {
+        await new Promise(r => setTimeout(r, 500 * attempt)); // Exponential backoff
       }
-    });
+    }
+  }
 
-    hls.on(Hls.Events.STREAM_STATE_UPDATED, (event, data) => {
-      // Stream state changes
-    });
-
-    videoElement.addEventListener('waiting', () => {
-      console.log('   ⏳ Video waiting for data...');
-    });
-
-    videoElement.addEventListener('playing', () => {
-      console.log('   ▶️  Video playing');
-    });
-
-    videoElement.addEventListener('stalled', (e) => {
-      console.log('   ⚠️  Video stalled');
-    });
-
-    hls.loadSource(streamUrl);
-    hls.attachMedia(videoElement);
-
-    videoElement.play().catch((e) => {
-      console.log(`   ⚠️  Autoplay blocked: ${e.message}`);
-    });
-  });
+  metrics.errorCount++;
+  return timings[timings.length - 1];
 }
 
-// ── Report Generation ─────────────────────────────────────────────────────────
-function generateReport() {
-  const duration = (metrics.endTime - metrics.startTime) / 1000;
-  const avgLatency = metrics.samples.reduce((sum, s) => sum + s.latency, 0) / metrics.samples.length;
-  const maxLatency = Math.max(...metrics.samples.map(s => s.latency));
-  const minLatency = Math.min(...metrics.samples.map(s => s.latency));
-  const avgBuffer = metrics.samples.reduce((sum, s) => sum + s.bufferAhead, 0) / metrics.samples.length;
-  const minBuffer = Math.min(...metrics.samples.map(s => s.bufferAhead));
-  const stallCount = metrics.stalls.length;
-  const errorCount = metrics.errors.filter(e => e.fatal).length;
-  const successfulSamples = metrics.samples.filter(s => s.readyState >= 2).length;
-  const uptime = (successfulSamples / metrics.samples.length * 100).toFixed(1);
+// ── Continuous Segment Monitoring ─────────────────────────────────────────────────
+async function monitorSegments(baseUrl, targetDuration) {
+  console.log(`\n📡 Starting continuous segment monitoring for ${CONFIG.testDurationSeconds}s...`);
+  console.log(`   Target segment duration: ${targetDuration}s`);
+  console.log(`   Expected segments: ~${Math.ceil(CONFIG.testDurationSeconds / targetDuration)}`);
 
-  const avgPlaybackRate = metrics.samples.reduce((sum, s) => sum + s.playbackRate, 0) / metrics.samples.length;
+  const startTime = Date.now();
+  const segmentTimings = [];
+  let lastSequence = null;
+  let stallCount = 0;
+
+  while (Date.now() - startTime < CONFIG.testDurationSeconds * 1000) {
+    try {
+      // Fetch manifest to get current sequence
+      const manifestResponse = await fetchWithHeaders(`${baseUrl}/index.m3u8`);
+      const manifest = await manifestResponse.text();
+      const lines = manifest.split('\n');
+
+      let currentSequence = null;
+      let latestSegmentUrl = null;
+
+      for (const line of lines) {
+        if (line.startsWith('#EXT-X-MEDIA-SEQUENCE:')) {
+          currentSequence = parseInt(line.split(':')[1], 10);
+        }
+        if (line.trim().endsWith('.ts') || line.trim().includes('.ts?')) {
+          latestSegmentUrl = line.startsWith('http')
+            ? line.trim()
+            : `${baseUrl}/${line.trim()}`;
+        }
+      }
+
+      // Detect stall (sequence not advancing)
+      if (lastSequence !== null && currentSequence !== null) {
+        if (currentSequence <= lastSequence) {
+          stallCount++;
+          console.log(`   ⚠️  Stall detected! Sequence: ${lastSequence} → ${currentSequence}`);
+        }
+      }
+      lastSequence = currentSequence;
+
+      if (latestSegmentUrl) {
+        const timing = await measureSegment(latestSegmentUrl, segmentTimings.length);
+        timing.sequence = currentSequence;
+        segmentTimings.push(timing);
+        metrics.segmentTimes.push(timing);
+      }
+
+      // Wait approximately one segment duration before next fetch
+      await new Promise(r => setTimeout(r, targetDuration * 1000));
+
+    } catch (error) {
+      console.log(`   ❌ Manifest fetch error: ${error.message}`);
+      metrics.errorCount++;
+      await new Promise(r => setTimeout(r, 1000));
+    }
+  }
+
+  return { segmentTimings, stallCount };
+}
+
+// ── Generate Report ─────────────────────────────────────────────────────────────
+function generateReport(manifestInfo, segmentTimings, stallCount) {
+  const duration = (metrics.endTime - metrics.startTime) / 1000;
+  const successfulTimings = segmentTimings.filter(t => t.success);
+  const failedTimings = segmentTimings.filter(t => !t.success);
+
+  const avgLatency = successfulTimings.length > 0
+    ? successfulTimings.reduce((sum, t) => sum + t.latency, 0) / successfulTimings.length
+    : 0;
+
+  const minLatency = successfulTimings.length > 0
+    ? Math.min(...successfulTimings.map(t => t.latency))
+    : 0;
+
+  const maxLatency = successfulTimings.length > 0
+    ? Math.max(...successfulTimings.map(t => t.latency))
+    : 0;
+
+  const avgSize = successfulTimings.length > 0
+    ? successfulTimings.reduce((sum, t) => sum + (t.size || 0), 0) / successfulTimings.length
+    : 0;
+
+  const avgSpeed = avgSize > 0 && avgLatency > 0
+    ? (avgSize / (avgLatency / 1000) / 1024).toFixed(1)
+    : 0;
+
+  // Calculate recommended buffer based on network performance
+  const segmentDuration = manifestInfo.targetDuration;
+  const downloadTimePerSegment = avgLatency / 1000; // seconds
+  const segmentsNeededForBuffer = Math.ceil(downloadTimePerSegment / segmentDuration) + 2; // +2 for safety
+  const recommendedBuffer = segmentsNeededForBuffer * segmentDuration;
+
+  // Calculate network capacity
+  const networkCapacity = avgSpeed > 0
+    ? parseFloat(avgSpeed) / (segmentDuration * 1024) // segments per second
+    : 0;
 
   console.log('\n');
-  console.log('═══════════════════════════════════════════════════════════════');
+  console.log('═══════════════════════════════════════════════════════════════════');
   console.log('                    STREAM TEST REPORT');
-  console.log('═══════════════════════════════════════════════════════════════');
-  console.log(`  Channel:        ${metrics.channelName}`);
-  console.log(`  Stream URL:     ${metrics.streamUrl.substring(0, 80)}...`);
-  console.log(`  Duration:       ${duration.toFixed(1)}s`);
-  console.log(`  Test Config:    liveSyncDuration=${CONFIG.testDurationSeconds}s`);
+  console.log('═══════════════════════════════════════════════════════════════════');
+  console.log(`  Stream URL:      ${CREDENTIALS.host}/live/${CREDENTIALS.user}/***/${CONFIG.streamId}.m3u8`);
+  console.log(`  Test Duration:   ${duration.toFixed(1)}s`);
+  console.log(`  Segments Tested: ${segmentTimings.length}`);
+  console.log(`  Successful:      ${successfulTimings.length}`);
+  console.log(`  Failed:          ${failedTimings.length}`);
+  console.log(`  Stalls:          ${stallCount}`);
   console.log('');
-  console.log('─────────────────── LATENCY ───────────────────');
-  console.log(`  Average:        ${avgLatency.toFixed(1)}s`);
-  console.log(`  Min:            ${minLatency.toFixed(1)}s`);
-  console.log(`  Max:            ${maxLatency.toFixed(1)}s`);
-  console.log(`  Target:         40s`);
+  console.log('─────────────────── SEGMENT PERFORMANCE ──────────────────');
+  console.log(`  Avg Latency:     ${avgLatency.toFixed(0)}ms`);
+  console.log(`  Min Latency:     ${minLatency.toFixed(0)}ms`);
+  console.log(`  Max Latency:     ${maxLatency.toFixed(0)}ms`);
+  console.log(`  Avg Size:        ${(avgSize / 1024).toFixed(1)} KB`);
+  console.log(`  Avg Speed:       ${avgSpeed} KB/s`);
   console.log('');
-  console.log('─────────────────── BUFFER ────────────────────');
-  console.log(`  Average:        ${avgBuffer.toFixed(1)}s`);
-  console.log(`  Min (critical): ${minBuffer.toFixed(1)}s`);
+  console.log('─────────────────── BUFFER ANALYSIS ─────────────────────');
+  console.log(`  Segment Duration: ${segmentDuration}s`);
+  console.log(`  Network Capacity: ${networkCapacity.toFixed(2)} segments/s`);
+  console.log(`  Segments Needed:  ${segmentsNeededForBuffer} (for stable buffer)`);
+  console.log(`  Recommended Buffer: ${recommendedBuffer.toFixed(0)}s`);
   console.log('');
-  console.log('─────────────────── STABILITY ─────────────────');
-  console.log(`  Stalls:         ${stallCount}`);
-  console.log(`  Fatal Errors:    ${errorCount}`);
-  console.log(`  Uptime:         ${uptime}%`);
+  console.log('─────────────────── CURRENT CONFIG ──────────────────────');
+  console.log(`  liveSyncDuration:       40s`);
+  console.log(`  liveMaxLatencyDuration: 60s`);
+  console.log(`  maxBufferLength:        40s`);
   console.log('');
-  console.log('─────────────────── PLAYBACK ──────────────────');
-  console.log(`  Avg Rate:       ${avgPlaybackRate.toFixed(3)}x`);
+  console.log('─────────────────── RECOMMENDATIONS ────────────────────');
+  if (recommendedBuffer > 50) {
+    console.log(`  ⚠️  HIGH LATENCY DETECTED`);
+    console.log(`     Network latency is very high. Consider:`);
+    console.log(`     - Increase liveSyncDuration to ${Math.ceil(recommendedBuffer * 1.5)}s`);
+    console.log(`     - Increase maxBufferLength to ${Math.ceil(recommendedBuffer * 2)}s`);
+  } else if (recommendedBuffer > 30) {
+    console.log(`  ⚠️  MODERATE-HIGH LATENCY`);
+    console.log(`     Network can handle ~${networkCapacity.toFixed(2)} segments/s`);
+    console.log(`     Current config of 40s buffer should work.`);
+  } else {
+    console.log(`  ✅ Network performance is good`);
+    console.log(`     Buffer of ${recommendedBuffer.toFixed(0)}s should be sufficient`);
+  }
+  if (stallCount > 3) {
+    console.log(`  ⚠️  STALLS DETECTED: ${stallCount}`);
+    console.log(`     Consider increasing buffer sizes or checking network stability`);
+  }
   console.log('');
-  console.log('═══════════════════════════════════════════════════════════════');
+  console.log('═══════════════════════════════════════════════════════════════════');
 
-  // Save detailed report
+  // Save report
   const report = {
     timestamp: new Date().toISOString(),
-    channel: metrics.channelName,
-    duration,
-    config: metrics.config,
-    latency: { avg: avgLatency, min: minLatency, max: maxLatency },
-    buffer: { avg: avgBuffer, min: minBuffer },
-    stalls: stallCount,
-    errors: errorCount,
-    uptime,
-    samples: metrics.samples,
-    stallEvents: metrics.stalls,
-    errorEvents: metrics.errors,
+    streamId: CONFIG.streamId,
+    duration: duration.toFixed(1),
+    segmentDuration,
+    networkLatency: {
+      avg: avgLatency.toFixed(0),
+      min: minLatency.toFixed(0),
+      max: maxLatency.toFixed(0),
+    },
+    throughput: {
+      avgSpeed: avgSpeed,
+      avgSizeKB: (avgSize / 1024).toFixed(1),
+    },
+    buffer: {
+      recommendedSeconds: recommendedBuffer.toFixed(0),
+      segmentsNeeded: segmentsNeededForBuffer,
+      networkCapacityPerSecond: networkCapacity.toFixed(2),
+    },
+    stability: {
+      stalls: stallCount,
+      failedSegments: failedTimings.length,
+      errorCount: metrics.errorCount,
+    },
+    config: {
+      liveSyncDuration: 40,
+      liveMaxLatencyDuration: 60,
+      maxBufferLength: 40,
+      maxMaxBufferLength: 60,
+    },
+    segmentTimings: segmentTimings.map(t => ({
+      ...t,
+      size: t.size ? `${(t.size / 1024).toFixed(1)}KB` : undefined,
+    })),
   };
 
-  const reportPath = join(__dirname, `../reports/stream-test-${Date.now()}.json`);
-  if (!existsSync(join(__dirname, '../reports'))) {
-    writeFileSync(join(__dirname, '../reports'), '');
+  const reportDir = join(__dirname, '../reports');
+  if (!existsSync(reportDir)) {
+    mkdirSync(reportDir, { recursive: true });
   }
-  writeFileSync(reportPath, JSON.stringify(report, null, 2));
-  console.log(`\n📄 Detailed report saved to: reports/stream-test-${Date.now()}.json`);
 
-  // Console output for programmatic use
+  const reportPath = join(reportDir, `stream-test-${Date.now()}.json`);
+  writeFileSync(reportPath, JSON.stringify(report, null, 2));
+  console.log(`\n📄 Report saved to: reports/stream-test-${Date.now()}.json`);
+
+  // Machine-readable output
   console.log('\n[MACHINE_OUTPUT]');
   console.log(JSON.stringify({
-    success: errorCount === 0 && stallCount <= CONFIG.maxBufferStalls,
-    latency: avgLatency,
-    maxLatency,
+    success: failedTimings.length === 0 && stallCount <= 3,
+    avgLatencyMs: avgLatency.toFixed(0),
+    recommendedBufferS: recommendedBuffer.toFixed(0),
     stalls: stallCount,
-    uptime,
-    score: calculateScore(avgLatency, maxLatency, stallCount, uptime),
+    score: calculateScore(avgLatency, stallCount, failedTimings.length, networkCapacity),
   }));
 
   return report;
 }
 
-function calculateScore(avgLatency, maxLatency, stalls, uptime) {
+function calculateScore(avgLatency, stalls, failed, networkCapacity) {
   let score = 100;
 
-  // Latency penalty (target ~40s)
-  if (avgLatency > 60) score -= 30;
-  else if (avgLatency > 50) score -= 20;
-  else if (avgLatency > 40) score -= 10;
-
-  // Max latency penalty
-  if (maxLatency > 90) score -= 20;
-  else if (maxLatency > 70) score -= 10;
+  // Latency penalty (target < 500ms for good performance)
+  if (avgLatency > 1000) score -= 40;
+  else if (avgLatency > 700) score -= 30;
+  else if (avgLatency > 500) score -= 20;
+  else if (avgLatency > 300) score -= 10;
 
   // Stall penalty
-  score -= stalls * 5;
+  score -= stalls * 8;
 
-  // Uptime penalty
-  if (uptime < 95) score -= 20;
-  else if (uptime < 98) score -= 10;
+  // Failed segments penalty
+  score -= failed * 5;
 
-  return Math.max(0, score);
+  // Network capacity penalty (need > 0.1 segments/s for stable playback)
+  if (networkCapacity < 0.05) score -= 30;
+  else if (networkCapacity < 0.1) score -= 15;
+
+  return Math.max(0, Math.min(100, score));
 }
 
-// ── Test Runner ───────────────────────────────────────────────────────────────
-async function runTest(streamUrl, channelName, durationSeconds) {
-  console.log(`\n🚀 Starting stream test for ${durationSeconds}s...`);
-  console.log(`   Channel: ${channelName}`);
-  console.log(`   URL: ${streamUrl.substring(0, 80)}...`);
-
-  metrics.startTime = Date.now();
-  metrics.channelName = channelName;
-  metrics.streamUrl = streamUrl;
-  isTestRunning = true;
-
-  const startTime = Date.now();
-
-  return new Promise((resolve, reject) => {
-    const interval = setInterval(() => {
-      detectStall();
-      collectSample();
-    }, CONFIG.samplingIntervalMs);
-
-    const checkEnd = setInterval(() => {
-      if (Date.now() - startTime >= durationSeconds * 1000) {
-        clearInterval(interval);
-        clearInterval(checkEnd);
-        isTestRunning = false;
-        metrics.endTime = Date.now();
-
-        if (hls) {
-          hls.destroy();
-          hls = null;
-        }
-        if (videoElement) {
-          videoElement.pause();
-          videoElement.remove();
-          videoElement = null;
-        }
-
-        resolve(generateReport());
-      }
-    }, 100);
-  });
-}
-
-// ── Channel Selection ─────────────────────────────────────────────────────────
-async function selectChannel(streams, selection) {
-  if (selection === 'random') {
-    const sportsChannels = streams.filter(s =>
-      s.name.toLowerCase().includes('deport') ||
-      s.name.toLowerCase().includes('sport') ||
-      s.name.toLowerCase().includes('espn') ||
-      s.name.toLowerCase().includes('fox sport') ||
-      s.name.toLowerCase().includes('bein')
-    );
-
-    const target = sportsChannels.length > 0 ? sportsChannels : streams;
-    return target[Math.floor(Math.random() * target.length)];
-  }
-
-  const searchTerm = selection.toLowerCase();
-  const match = streams.find(s => s.name.toLowerCase().includes(searchTerm));
-
-  if (match) return match;
-
-  console.log(`\n⚠️  Channel "${selection}" not found. Available sports channels:`);
-  streams
-    .filter(s => s.name.toLowerCase().includes('sport') || s.name.toLowerCase().includes('deport'))
-    .slice(0, 10)
-    .forEach(s => console.log(`   - ${s.name}`));
-
-  return null;
-}
-
-// ── Main ─────────────────────────────────────────────────────────────────────
+// ── Main ───────────────────────────────────────────────────────────────────────
 async function main() {
   const args = process.argv.slice(2);
-  let channelSelection = null;
-  let duration = CONFIG.testDurationSeconds;
 
   for (let i = 0; i < args.length; i++) {
-    if (args[i] === '--channel' && args[i + 1]) {
-      channelSelection = args[i + 1];
-    } else if (args[i] === '--random') {
-      channelSelection = 'random';
+    if (args[i] === '--stream-id' && args[i + 1]) {
+      CONFIG.streamId = args[i + 1];
     } else if (args[i] === '--duration' && args[i + 1]) {
-      duration = parseInt(args[i + 1], 10);
+      CONFIG.testDurationSeconds = parseInt(args[i + 1], 10);
+    } else if (args[i] === '--samples' && args[i + 1]) {
+      CONFIG.segmentSamples = parseInt(args[i + 1], 10);
     } else if (args[i] === '--help') {
       console.log(`
-Stream Stability Tester
+Stream Stability Tester v1.0
+
 Usage:
   node stream-tester.mjs [options]
 
 Options:
-  --channel <name>   Select channel by name (partial match)
-  --random            Select a random sports channel
-  --duration <secs>   Test duration in seconds (default: 60)
-  --help              Show this help
+  --stream-id <id>      Stream ID to test (default: ${CONFIG.streamId})
+  --duration <secs>     Test duration in seconds (default: 60)
+  --samples <n>         Number of segment samples (default: 10)
+  --help                Show this help
 
 Examples:
-  node stream-tester.mjs --random
-  node stream-tester.mjs --channel "ESPN" --duration 120
+  node stream-tester.mjs
+  node stream-tester.mjs --stream-id 423307 --duration 120
       `);
       process.exit(0);
     }
   }
 
-  console.log('╔═══════════════════════════════════════════════════════════╗');
-  console.log('║          STREAM STABILITY TESTER v1.0.0                  ║');
-  console.log('╚═══════════════════════════════════════════════════════════╝');
+  console.log('╔═══════════════════════════════════════════════════════════════╗');
+  console.log('║          STREAM STABILITY TESTER v1.0.0                      ║');
+  console.log('╚═══════════════════════════════════════════════════════════════╝');
+  console.log(`\n🎬 Testing stream ID: ${CONFIG.streamId}`);
+  console.log(`⏱️  Duration: ${CONFIG.testDurationSeconds}s`);
+
+  metrics.startTime = Date.now();
 
   try {
-    // Authenticate
-    await login();
+    const streamUrl = getCurrentStreamUrl();
+    const manifestInfo = await analyzeManifest(streamUrl);
 
-    // Get streams
-    const streams = await getLiveStreams();
+    // Initial segment download test
+    console.log('\n📊 Initial segment download test...');
+    const initialSegments = manifestInfo.segments.slice(0, CONFIG.segmentSamples);
+    const segmentTimings = [];
 
-    if (streams.length === 0) {
-      throw new Error('No streams found');
+    for (let i = 0; i < initialSegments.length; i++) {
+      const timing = await measureSegment(initialSegments[i], i);
+      segmentTimings.push(timing);
+      metrics.segmentTimes.push(timing);
     }
 
-    // Select channel
-    let selectedStream;
-    if (channelSelection) {
-      selectedStream = await selectChannel(streams, channelSelection);
-    } else {
-      console.log('\n📺 Available actions:');
-      console.log('   1. Select a sports channel (type --channel "name")');
-      console.log('   2. Use --random for random sports channel');
-      console.log('\n   Example: node stream-tester.mjs --channel "ESPN"');
-      selectedStream = await selectChannel(streams, 'espn');
-    }
+    // Continuous monitoring
+    const { stallCount } = await monitorSegments(manifestInfo.baseUrl, manifestInfo.targetDuration);
 
-    if (!selectedStream) {
-      console.log('\n❌ No channel selected. Exiting.');
-      process.exit(1);
-    }
-
-    console.log(`\n✅ Selected channel: ${selectedStream.name}`);
-
-    // Get stream URL
-    console.log('\n🔗 Getting stream URL...');
-    const streamUrl = await getStreamUrl(selectedStream.stream_id);
-
-    if (!streamUrl) {
-      throw new Error('Could not get stream URL');
-    }
-
-    console.log(`   Stream URL obtained`);
-
-    // Create video element (requires DOM)
-    if (typeof document === 'undefined') {
-      // Running in Node.js without JSDOM - create minimal test
-      console.log('\n⚠️  Running in Node.js environment');
-      console.log('   For full video testing, run in browser with the app');
-      console.log('\n   Run: npm start');
-      console.log('   Then open browser dev tools and run stream-tester.mjs');
-
-      // Create a simple HTTP-based test
-      await runHttpStreamTest(streamUrl, selectedStream.name, duration);
-      return;
-    }
-
-    videoElement = createVideoElement();
-
-    // Setup HLS
-    await setupHls(streamUrl);
-
-    // Run test
-    await runTest(streamUrl, selectedStream.name, duration);
+    metrics.endTime = Date.now();
+    generateReport(manifestInfo, segmentTimings, stallCount);
 
   } catch (error) {
     console.error(`\n❌ Test failed: ${error.message}`);
+    metrics.endTime = Date.now();
     process.exit(1);
-  }
-}
-
-// ── HTTP Stream Test (for Node.js without DOM) ────────────────────────────────
-async function runHttpStreamTest(streamUrl, channelName, durationSeconds) {
-  console.log('\n🔍 Analyzing stream HTTP headers...');
-
-  try {
-    const response = await fetch(streamUrl, { method: 'HEAD' });
-    console.log(`   Status: ${response.status}`);
-    console.log(`   Content-Type: ${response.headers.get('content-type')}`);
-
-    const manifestResponse = await fetch(streamUrl);
-    const manifest = await manifestResponse.text();
-
-    console.log('\n📋 Stream Manifest Analysis:');
-    const lines = manifest.split('\n');
-    for (const line of lines) {
-      if (line.includes('EXT-X-TARGETDURATION')) {
-        console.log(`   Target Duration: ${line.split(':')[1]}`);
-      }
-      if (line.includes('EXT-X-MEDIA-SEQUENCE')) {
-        console.log(`   Media Sequence: ${line.split(':')[1]}`);
-      }
-    }
-
-    console.log(`\n✅ Stream is accessible and valid`);
-    console.log(`   Channel: ${channelName}`);
-    console.log(`   Duration tested: ${durationSeconds}s`);
-
-  } catch (error) {
-    console.error(`\n❌ Stream test failed: ${error.message}`);
   }
 }
 

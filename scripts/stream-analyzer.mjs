@@ -33,20 +33,19 @@ const CONFIG = {
 // ── API Functions ──────────────────────────────────────────────────────────────
 async function login() {
   console.log('\n🔐 Authenticating...');
+  // Login via query params GET (default for curl)
   const params = new URLSearchParams({
     username: CREDENTIALS.user,
     password: CREDENTIALS.password,
   });
 
-  const response = await fetch(`${CREDENTIALS.host}/player_api.php`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: params.toString(),
-  });
+  const response = await fetch(`${CREDENTIALS.host}/player_api.php?${params}`);
 
   const data = await response.json();
-  // This server returns { message: "username" } on success, not user_info.auth
-  if (data.message === CREDENTIALS.user || data.user_info?.auth) {
+  console.log('   Auth response:', JSON.stringify(data).substring(0, 100));
+
+  // Server returns { message: "blusag" } on success
+  if (data.message || data.user_info?.username) {
     console.log('✅ Auth OK');
     return data;
   }
@@ -54,27 +53,40 @@ async function login() {
 }
 
 async function getLiveStreams() {
-  const params = new URLSearchParams({
+  console.log('\n📡 Fetching live streams...');
+  // Try POST with form data and proper headers
+  const body = new URLSearchParams({
     username: CREDENTIALS.user,
     password: CREDENTIALS.password,
     action: 'get_live_streams',
   });
 
-  const response = await fetch(`${CREDENTIALS.host}/player_api.php?${params}`);
-  return response.json();
-}
-
-async function getStreamUrl(streamId) {
-  const params = new URLSearchParams({
-    username: CREDENTIALS.user,
-    password: CREDENTIALS.password,
-    stream: streamId,
-    type: 'live',
+  const response = await fetch(`${CREDENTIALS.host}/player_api.php`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Accept': 'application/json',
+      'Referer': 'https://pinncode.github.io/',
+      'Origin': 'https://pinncode.github.io',
+    },
+    body: body.toString(),
   });
 
-  const response = await fetch(`${CREDENTIALS.host}/player_api.php?${params}`);
   const data = await response.json();
-  return data.stream_link;
+  console.log('   Streams response:', JSON.stringify(data).substring(0, 200));
+
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  // If not array, return empty array
+  console.log('⚠️  API did not return stream array');
+  return [];
+}
+
+function getStreamUrl(streamId) {
+  // Stream URL format: /live/{user}/{password}/{stream_id}.m3u8
+  return `${CREDENTIALS.host}/live/${CREDENTIALS.user}/${CREDENTIALS.password}/${streamId}.m3u8`;
 }
 
 async function measureRequest(url, label) {
@@ -87,6 +99,11 @@ async function measureRequest(url, label) {
       const response = await fetch(url, {
         method: 'GET',
         signal: AbortSignal.timeout(CONFIG.timeout),
+        headers: {
+          'Accept': '*/*',
+          'Referer': 'https://pinncode.github.io/',
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+        },
       });
       const end = Date.now();
       const latency = end - start;
