@@ -13,8 +13,8 @@
  *  3. Latencia crítica (> 30s)             → seek a liveEdge − 10s
  *  4. Buffer < 8s  (freno de emergencia)   → brake → 1.0x
  *  5. Recuperación post-stall activa       → brake → 1.0x hasta buffer ≥ 15s
- *  6. Buffer > 15s && latencia > 22s        → catch-up → 1.1x (hasta lat < 15s)
- *  7. Default                              → none (hls.js gestiona con 1.1x)
+ *  6. Buffer > 15s && latencia > 25s        → catch-up → 1.08x (hasta lat < 18s)
+ *  7. Default                              → none (hls.js gestiona con 1.08x)
  */
 
 export interface LiveLatencySnapshot {
@@ -48,7 +48,7 @@ export class LiveLatencySyncUtil {
    * Valor para segmentos de 10s con objetivo de ~20s de delay.
    */
   private static readonly EMERGENCY_BRAKE_BUFFER_SECONDS = 8;
-  /** Buffer mínimo para activar el soft catch-up de 1.1x. */
+  /** Buffer mínimo para activar el soft catch-up de 1.08x. */
   private static readonly CATCHUP_MIN_BUFFER_SECONDS = 15;
 
   /** Buffer mínimo para salir del modo de recuperación post-stall. */
@@ -57,10 +57,10 @@ export class LiveLatencySyncUtil {
   // ── Umbrales de latencia ──────────────────────────────────────────────────
 
   /** Latencia mínima para iniciar el soft catch-up. */
-  private static readonly CATCHUP_LATENCY_START_SECONDS = 22;
+  private static readonly CATCHUP_LATENCY_START_SECONDS = 25;
 
   /** Latencia objetivo al finalizar el catch-up. */
-  private static readonly CATCHUP_LATENCY_STOP_SECONDS = 15;
+  private static readonly CATCHUP_LATENCY_STOP_SECONDS = 18;
 
   /** Seek de emergencia si hls.js no pudo sincronizar por sí solo. */
   private static readonly HARD_SEEK_LATENCY_SECONDS = 30;
@@ -140,9 +140,9 @@ export class LiveLatencySyncUtil {
       return { action: 'brake', targetTime: null };
     }
 
-    // ── 6. Soft catch-up 1.1x con hysteresis ────────────────────────────
-    //    Entrada:  buffer ≥ 15s  &&  latencia > 22s
-    //    Salida:   latencia ≤ 15s  (o freno por buffer)
+    // ── 6. Soft catch-up 1.08x con hysteresis ──────────────────────────
+    //    Entrada:  buffer ≥ 15s  &&  latencia > 25s
+    //    Salida:   latencia ≤ 18s  (o freno por buffer)
     if (!this.isCatchingUp) {
       if (
         snapshot.bufferAhead >= LiveLatencySyncUtil.CATCHUP_MIN_BUFFER_SECONDS &&

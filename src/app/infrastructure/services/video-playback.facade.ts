@@ -178,7 +178,7 @@ export class VideoPlaybackFacade {
 
       // ── Sincronización al Live Edge ──────────────────────────────────
       // El servidor entrega segmentos de 10s (TARGETDURATION:10).
-      // REDUCIDO para lograr ~20s de delay (era 40-60s).
+      // OBJETIVO: ~20s de delay con margen de seguridad.
       // 2 segmentos detrás del live edge.
       liveSyncDuration: 20,
       liveMaxLatencyDuration: 30,
@@ -187,13 +187,13 @@ export class VideoPlaybackFacade {
 
       // ── Aceleración automática ────────────────────────────────────────
       // Catch-up MODERADO para recuperar latencia gradualmente.
-      maxLiveSyncPlaybackRate: 1.1,
+      maxLiveSyncPlaybackRate: 1.08,
 
       // ── Gestión de buffer ─────────────────────────────────────────────
-      // Buffers reducidos para seguir de cerca el live edge.
-      // 2-3 segmentos de 10s = 20-30s máximo.
-      maxBufferLength: 20,
-      maxMaxBufferLength: 30,
+      // Buffers con margen para evitar stalls.
+      // 2-3 segmentos de 10s = 20-30s.
+      maxBufferLength: 25,
+      maxMaxBufferLength: 35,
       backBufferLength: 10,
       // Huecos en el buffer que indican problemas de red.
       maxBufferHole: 0.5,
