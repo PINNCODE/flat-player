@@ -177,11 +177,11 @@ export class VideoPlaybackFacade {
       lowLatencyMode: true,
 
       // ── Sincronización al Live Edge ──────────────────────────────────
-      // liveSyncDuration: chunks detrás del vivo absoluto.
-      // Valor óptimo: 4-8s para deportes (balance entre estabilidad y latencia).
-      // Tu backend soporta hasta 30s de buffer sin romperse, usamos 8s.
-      liveSyncDuration: 8,
-      liveMaxLatencyDuration: 15,
+      // El servidor entrega segmentos de 10s (TARGETDURATION:10).
+      // liveSyncDuration: mantener 2 segmentos (20s) detrás del live edge.
+      // Es el balance óptimo entre estabilidad y baja latencia.
+      liveSyncDuration: 20,
+      liveMaxLatencyDuration: 35,
       // Mantiene el buffer de live infinite para evitar desync cuando se pausa.
       liveDurationInfinity: true,
 
@@ -190,11 +190,11 @@ export class VideoPlaybackFacade {
       maxLiveSyncPlaybackRate: 1.2,
 
       // ── Gestión de buffer ─────────────────────────────────────────────
-      // Buffers reducidos para seguir el live edge más de cerca.
-      // El buffer de back se reduce para evitar memoria innecesaria.
-      maxBufferLength: 12,
-      maxMaxBufferLength: 20,
-      backBufferLength: 5,
+      // Buffers dimensionados para segmentos de 10s.
+      // Mínimo 3 segmentos (30s) para evitar cortes por red.
+      maxBufferLength: 30,
+      maxMaxBufferLength: 50,
+      backBufferLength: 20,
       // Huecos en el buffer que indican problemas de red.
       maxBufferHole: 0.5,
     });

@@ -10,10 +10,10 @@
  * Estrategias (evaluadas en orden):
  *  1. Stall detectado por timer            → resync
  *  2. Buffering activo o paused            → none (1.0x implícito)
- *  3. Latencia crítica (> 15s)             → seek a liveEdge − 5s
- *  4. Buffer < 4s  (freno de emergencia)   → brake → 1.0x
- *  5. Recuperación post-stall activa       → brake → 1.0x hasta buffer ≥ 6s
- *  6. Buffer > 8s && latencia > 10s        → catch-up → 1.15x (hasta lat < 6s)
+ *  3. Latencia crítica (> 35s)             → seek a liveEdge − 10s
+ *  4. Buffer < 10s  (freno de emergencia)   → brake → 1.0x
+ *  5. Recuperación post-stall activa       → brake → 1.0x hasta buffer ≥ 20s
+ *  6. Buffer > 20s && latencia > 25s        → catch-up → 1.15x (hasta lat < 15s)
  *  7. Default                              → none (hls.js gestiona con 1.15x)
  */
 
@@ -45,26 +45,26 @@ export class LiveLatencySyncUtil {
 
   /**
    * Freno de emergencia: buffer por debajo → 1.0x inmediato.
-   * Valor reducido para latencia objetivo de 8s.
+   * Valor para segmentos de 10s y latencia objetivo de 20s.
    */
-  private static readonly EMERGENCY_BRAKE_BUFFER_SECONDS = 4;
+  private static readonly EMERGENCY_BRAKE_BUFFER_SECONDS = 10;
   /** Buffer mínimo para activar el soft catch-up de 1.15x. */
-  private static readonly CATCHUP_MIN_BUFFER_SECONDS = 8;
+  private static readonly CATCHUP_MIN_BUFFER_SECONDS = 20;
 
   /** Buffer mínimo para salir del modo de recuperación post-stall. */
-  private static readonly STALL_RECOVERY_BUFFER_SECONDS = 6;
+  private static readonly STALL_RECOVERY_BUFFER_SECONDS = 20;
 
   // ── Umbrales de latencia ──────────────────────────────────────────────────
 
   /** Latencia mínima para iniciar el soft catch-up. */
-  private static readonly CATCHUP_LATENCY_START_SECONDS = 10;
+  private static readonly CATCHUP_LATENCY_START_SECONDS = 25;
 
   /** Latencia objetivo al finalizar el catch-up. */
-  private static readonly CATCHUP_LATENCY_STOP_SECONDS = 6;
+  private static readonly CATCHUP_LATENCY_STOP_SECONDS = 15;
 
   /** Seek de emergencia si hls.js no pudo sincronizar por sí solo. */
-  private static readonly HARD_SEEK_LATENCY_SECONDS = 15;
-  private static readonly HARD_SEEK_OFFSET_SECONDS = 5;
+  private static readonly HARD_SEEK_LATENCY_SECONDS = 35;
+  private static readonly HARD_SEEK_OFFSET_SECONDS = 10;
 
   // ── Tasa de reproducción del soft catch-up ────────────────────────────────
   /** Valor catch-up del util (complementa el maxLiveSyncPlaybackRate). */
@@ -141,8 +141,8 @@ export class LiveLatencySyncUtil {
     }
 
     // ── 6. Soft catch-up 1.15x con hysteresis ────────────────────────────
-    //    Entrada:  buffer ≥ 8s  &&  latencia > 10s
-    //    Salida:   latencia ≤ 6s  (o freno por buffer)
+    //    Entrada:  buffer ≥ 20s  &&  latencia > 25s
+    //    Salida:   latencia ≤ 15s  (o freno por buffer)
     if (!this.isCatchingUp) {
       if (
         snapshot.bufferAhead >= LiveLatencySyncUtil.CATCHUP_MIN_BUFFER_SECONDS &&
