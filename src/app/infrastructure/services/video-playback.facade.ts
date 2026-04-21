@@ -173,30 +173,30 @@ export class VideoPlaybackFacade {
     this.hls = new Hls({
       enableWorker: true,
       // ── Modo Baja Latencia ───────────────────────────────────────────
-      // Activado para streams en vivo (fútbol). Permite追上 live edge.
-      lowLatencyMode: true,
+      // DESACTIVADO: con latencia de red de 200-300ms, este modo causa
+      // que el player intente追上 muy agresivamente y causa más cortes.
+      lowLatencyMode: false,
 
       // ── Sincronización al Live Edge ──────────────────────────────────
       // El servidor entrega segmentos de 10s (TARGETDURATION:10).
-      // liveSyncDuration: mantener 2 segmentos (20s) detrás del live edge.
-      // Es el balance óptimo entre estabilidad y baja latencia.
-      liveSyncDuration: 20,
-      liveMaxLatencyDuration: 35,
+      // Buffer de 40s (4 segmentos) para absorber latencia de red alta.
+      liveSyncDuration: 40,
+      liveMaxLatencyDuration: 60,
       // Mantiene el buffer de live infinite para evitar desync cuando se pausa.
       liveDurationInfinity: true,
 
       // ── Aceleración automática ────────────────────────────────────────
-      // Catch-up agresivo para recuperar latencia perdida.
-      maxLiveSyncPlaybackRate: 1.2,
+      // Catch-up MODERADO para no agotar el buffer.
+      maxLiveSyncPlaybackRate: 1.05,
 
       // ── Gestión de buffer ─────────────────────────────────────────────
-      // Buffers dimensionados para segmentos de 10s.
-      // Mínimo 3 segmentos (30s) para evitar cortes por red.
-      maxBufferLength: 30,
-      maxMaxBufferLength: 50,
-      backBufferLength: 20,
+      // Buffers grandes para absorber latencia de red de 200-300ms.
+      // 6 segmentos de 10s = 60s máximo.
+      maxBufferLength: 40,
+      maxMaxBufferLength: 60,
+      backBufferLength: 30,
       // Huecos en el buffer que indican problemas de red.
-      maxBufferHole: 0.5,
+      maxBufferHole: 1.0,
     });
     this.hls.loadSource(sourceUrl);
     this.hls.attachMedia(videoElement);
