@@ -11,7 +11,16 @@
     "build:tizen": "ng build --configuration production && node scripts/build-tizen.mjs",
     "build:wrapper": "npm run build:tizen && npm run copy:wrapper",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "sdb:kill": "sdb kill-server",
+    "sdb:start": "sdb start-server",
+    "sdb:devices": "sdb devices",
+    "sdb:connect": "sdb connect 192.168.0.139:26101",
+    "sdb:disconnect": "sdb disconnect 192.168.0.139:26101",
+    "sdb:install": "sdb install /Users/notblu/Documents/angular/flat-iptv-player/flatPlayerWrapper/flatPlayerWrapper.wgt",
+    "sdb:run": "sdb launch jBGSnDuP3t.flatPlayerWrapper",
+    "sdb:deploy": "set -e && npm run build:wrapper && echo '[SDB] Instalando en TV...' && sdb install -r /Users/notblu/Documents/angular/flat-iptv-player/flatPlayerWrapper/flatPlayerWrapper.wgt && echo '[SDB] Lanzando app...' && sdb launch jBGSnDuP3t.flatPlayerWrapper",
+    "sdb:all": "set -e && echo '[SDB] Deteniendo servidor...' && npm run sdb:kill && echo '[SDB] Iniciando servidor...' && npm run sdb:start && echo '[SDB] Conectando a TV...' && npm run sdb:connect && echo '[SDB] Desplegando app...' && npm run sdb:deploy && echo '[SDB] Despliegue completado'"
   },
   "private": true,
   "packageManager": "npm@11.11.0",
