@@ -157,7 +157,7 @@ describe('GetHomeRecommendationsUseCase', () => {
       },
     ];
 
-    const recommendations = useCase.execute(categories, null);
+    const recommendations = useCase.execute(categories, []);
     const sportsRow = recommendations.rows.find((row) => row.id === 'sports-ppv-row');
 
     expect(sportsRow).toBeUndefined();
