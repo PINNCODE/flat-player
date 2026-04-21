@@ -119,7 +119,7 @@ $orb-deep: #0b1220;
 .login-page__form-group {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 1rem;
 }
 
 .login-page__form-error {
@@ -169,7 +169,7 @@ $orb-deep: #0b1220;
 }
 
 .login-page__form-button {
-    margin-top: 0.5rem;
+    margin-top: 1rem;
     width: 100%;
     padding: 1rem;
     border: 0;

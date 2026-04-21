@@ -1,21 +1,21 @@
 <div class="login-page">
     <div class="login-page__layout">
-        <section class="login-page__welcome" aria-label="Welcome message">
-            <p class="login-page__welcome-title">Welcome to Flat player</p>
+        <section class="login-page__welcome" aria-label="Mensaje de bienvenida">
+            <p class="login-page__welcome-title">Bienvenido a Flat player</p>
             <p class="login-page__welcome-text">
-                Flat player is a lightweight IPTV player that allows you to access live TV using your existing Xtream Codes credentials.
+                Flat player es un reproductor IPTV ligero que te permite acceder a TV en vivo usando tus credenciales Xtream Codes.
             </p>
             <p class="login-page__welcome-text">
-                Simply log in with your server URL, username, and password to start streaming instantly.
+                Simplemente inicia sesión con la URL de tu servidor, usuario y contraseña para comenzar a reproducir al instante.
             </p>
         </section>
 
-        <section class="login-page__form" aria-label="Login form">
+        <section class="login-page__form" aria-label="Formulario de inicio de sesión">
             <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-page__form-content">
-                <h1 class="login-page__title">Login</h1>
+                <h1 class="login-page__title">Iniciar sesión</h1>
                 <div class="login-page__form-group"
                      [class.login-page__form-group--nav-focused]="focusedIndex() === 0 && !isEditing()">
-                    <label for="host" class="login-page__form-label">Host</label>
+                    <label for="host" class="login-page__form-label">Servidor</label>
                     <input
                         #hostInput
                         type="url"
@@ -34,7 +34,7 @@
                 </div>
                 <div class="login-page__form-group"
                      [class.login-page__form-group--nav-focused]="focusedIndex() === 1 && !isEditing()">
-                    <label for="username" class="login-page__form-label">Username</label>
+                    <label for="username" class="login-page__form-label">Usuario</label>
                     <input
                         #usernameInput
                         type="text"
@@ -52,7 +52,7 @@
                 </div>
                 <div class="login-page__form-group"
                      [class.login-page__form-group--nav-focused]="focusedIndex() === 2 && !isEditing()">
-                    <label for="password" class="login-page__form-label">Password</label>
+                    <label for="password" class="login-page__form-label">Contraseña</label>
                     <input
                         #passwordInput
                         type="password"
@@ -75,7 +75,7 @@
                     [class.login-page__form-button--nav-focused]="focusedIndex() === 3"
                     [disabled]="isSubmitting()"
                 >
-                    {{ isSubmitting() ? 'Loading...' : 'Login' }}
+                    {{ isSubmitting() ? 'Cargando...' : 'Iniciar sesión' }}
                 </button>
 
                 <button
