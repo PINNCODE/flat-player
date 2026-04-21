@@ -172,24 +172,31 @@ export class VideoPlaybackFacade {
     this.destroy();
     this.hls = new Hls({
       enableWorker: true,
-      lowLatencyMode: false,
+      // ── Modo Baja Latencia ───────────────────────────────────────────
+      // Activado para streams en vivo (fútbol). Permite追上 live edge.
+      lowLatencyMode: true,
 
-      // ── Sincronización (Modo SeguridadChunks) ────
-      // Ajuste a 30s (3 chunks detrás del vivo absoluto).
-      // Es el límite físico para evitar que el buffer llegue a 0s.
-      liveSyncDuration: 30,
-      // Latencia máxima tolerable antes del resync (debe ser > liveSyncDuration).
-      liveMaxLatencyDuration: 60,
+      // ── Sincronización al Live Edge ──────────────────────────────────
+      // liveSyncDuration: chunks detrás del vivo absoluto.
+      // Valor óptimo: 4-8s para deportes (balance entre estabilidad y latencia).
+      // Tu backend soporta hasta 30s de buffer sin romperse, usamos 8s.
+      liveSyncDuration: 8,
+      liveMaxLatencyDuration: 15,
+      // Mantiene el buffer de live infinite para evitar desync cuando se pausa.
+      liveDurationInfinity: true,
 
       // ── Aceleración automática ────────────────────────────────────────
-      // Catch-up suave para acomodarse a la latencia de 20s.
-      maxLiveSyncPlaybackRate: 1.15,
+      // Catch-up agresivo para recuperar latencia perdida.
+      maxLiveSyncPlaybackRate: 1.2,
 
       // ── Gestión de buffer ─────────────────────────────────────────────
-      // Alivio enfocado a web (sin límite agresivo de backBuffer).
-      maxBufferLength: 30,
-      maxMaxBufferLength: 40,
-      backBufferLength: 10,
+      // Buffers reducidos para seguir el live edge más de cerca.
+      // El buffer de back se reduce para evitar memoria innecesaria.
+      maxBufferLength: 12,
+      maxMaxBufferLength: 20,
+      backBufferLength: 5,
+      // Huecos en el buffer que indican problemas de red.
+      maxBufferHole: 0.5,
     });
     this.hls.loadSource(sourceUrl);
     this.hls.attachMedia(videoElement);
@@ -410,11 +417,15 @@ export class VideoPlaybackFacade {
     this.bufferAheadSeconds.set(bufferAhead);
 
     // Limpiar isStalledRecovery en cuanto el buffer supere el umbral de recuperación.
+    // También: forzar resync de audio/video tras stall para evitar drift.
     if (
       this.isStalledRecovery &&
       bufferAhead >= VideoPlaybackFacade.STALL_RECOVERY_BUFFER_SECONDS
     ) {
       this.isStalledRecovery = false;
+      // Recovery completo: hacer seek mínimo al live edge para resync de audio.
+      // Sin esto, el audio queda desfasado después de un stall de red.
+      this.resyncAudioVideo(videoElement, liveEdge, currentTime);
     }
 
     if (!Number.isFinite(liveEdge)) {
@@ -509,6 +520,36 @@ export class VideoPlaybackFacade {
 
     this.hls.stopLoad();
     this.hls.startLoad(-1, true);
+  }
+
+  /**
+   * Fuerza un seek mínimo al live edge para resincronizar audio/video
+   * después de un stall. Sin esto, el audio queda desfasado.
+   */
+  private resyncAudioVideo(videoElement: HTMLVideoElement, liveEdge: number, currentTime: number): void {
+    if (!Number.isFinite(liveEdge) || videoElement.paused || this.isSeekInProgress) {
+      return;
+    }
+
+    const targetTime = Math.max(currentTime, liveEdge - 2);
+    if (Math.abs(targetTime - currentTime) < 0.5) {
+      return;
+    }
+
+    this.isSeekInProgress = true;
+    videoElement.currentTime = targetTime;
+
+    const onSeeked = () => {
+      this.isSeekInProgress = false;
+      videoElement.removeEventListener('seeked', onSeeked);
+    };
+
+    videoElement.addEventListener('seeked', onSeeked, { once: true });
+
+    // Fallback: desmarcar si no ocurre el seeked en 1s.
+    setTimeout(() => {
+      this.isSeekInProgress = false;
+    }, 1000);
   }
 
   private flushOldBuffer(videoElement: HTMLVideoElement): void {
