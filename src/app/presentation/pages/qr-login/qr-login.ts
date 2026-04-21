@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { QrLoginFirebaseService } from '@infrastructure/services/qr-login-firebase.service';
+import { APP_VERSION } from '@app/version';
 
 @Component({
   selector: 'app-qr-login',
@@ -24,6 +25,7 @@ export class QrLogin implements OnInit {
   protected readonly submitStatus = signal<'idle' | 'success' | 'error'>('idle');
   protected readonly statusMessage = signal('');
   protected readonly successView = signal(false);
+  protected readonly appVersion = APP_VERSION;
 
   private sessionId = '';
 

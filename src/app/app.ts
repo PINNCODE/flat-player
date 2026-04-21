@@ -2,8 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { Router, RouterOutlet } from '@angular/router';
 import { AutoLoginUseCase } from '@core/application/usecases/auto-login.usecase';
 import { HttpLoaderService } from '@infrastructure/services/http-loader.service';
-
-export const APP_VERSION = '1.0.0-qr-20240418';
+import { APP_VERSION } from './version';
 
 @Component({
   selector: 'app-root',
