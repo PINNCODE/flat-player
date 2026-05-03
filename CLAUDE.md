@@ -118,3 +118,8 @@ El build `gh-pages` copia `index.html` → `404.html` para SPA routing.
 - `@core/*` → `src/app/core/`
 - `@infrastructure/*` → `src/app/infrastructure/`
 - `@app/*` → `src/app/*`
+
+<!-- SPECKIT START -->
+For additional context about technologies to be used, project structure,
+shell commands, and other important information, read the current plan
+<!-- SPECKIT END -->
