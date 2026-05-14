@@ -38,12 +38,6 @@ export class TizenRemoteKeysAdapter {
       tizenApi.tvinputdevice.registerKey('Info');
       tizenApi.tvinputdevice.registerKey('Guide');
 
-      // Color buttons (not used, reserved for future)
-      // tizenApi.tvinputdevice.registerKey('ColorF0Red');
-      // tizenApi.tvinputdevice.registerKey('ColorF1Green');
-      // tizenApi.tvinputdevice.registerKey('ColorF2Yellow');
-      // tizenApi.tvinputdevice.registerKey('ColorF3Blue');
-
       // Menú y herramientas
       tizenApi.tvinputdevice.registerKey('Menu');
       tizenApi.tvinputdevice.registerKey('Tools');

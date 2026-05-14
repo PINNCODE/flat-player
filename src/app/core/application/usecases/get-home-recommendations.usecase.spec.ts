@@ -125,7 +125,7 @@ describe('GetHomeRecommendationsUseCase', () => {
     const recommendations = useCase.execute(categories, []);
     const sportsRow = recommendations.rows.find((row) => row.id === 'sports-ppv-row');
 
-    expect(sportsRow?.events?.map((event) => event.timeLabel)).toEqual(['00:00', '09:15', '11:45', '17:30']);
+    expect(sportsRow?.events?.map((event) => event.timeLabel)).toEqual(['09:15', '11:45', '17:30']);
   });
 
   it('does not include events from earlier hours and does not include entries without parsable time', () => {

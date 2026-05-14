@@ -429,8 +429,6 @@ export class Dashboard implements AfterViewInit {
         targetChannelIndex,
       });
 
-      const settings = this.getUserSettingsUseCase.execute();
-
       this.favoriteChannelIds.set(this.getTopFavoriteIds());
       this.refreshHomeRecommendations();
 

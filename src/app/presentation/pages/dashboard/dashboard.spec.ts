@@ -6,6 +6,7 @@ import { ResolveStreamUrlUseCase } from '@core/application/usecases/resolve-stre
 import { TrackPlaybackErrorUseCase } from '@core/application/usecases/track-playback-error.usecase';
 import { GetChannelEpgUseCase } from '@core/application/usecases/get-channel-epg.usecase';
 import { GetUserInfoUseCase } from '@core/application/usecases/get-user-info.usecase';
+import { GetUserSettingsUseCase } from '@core/application/usecases/get-user-settings.usecase';
 import { TV_CATALOG_REPOSITORY } from '@core/domain/ports/tv-catalog.repository';
 import { EPG_REPOSITORY } from '@core/domain/ports/epg.repository';
 import { TvCatalogMockAdapter } from '@infrastructure/adapters/mock/tv-catalog-mock.adapter';
@@ -24,6 +25,10 @@ interface ResolveStreamUrlUseCaseMock {
 interface VideoPlaybackPortMock {
   start: ReturnType<typeof vi.fn>;
   destroy: ReturnType<typeof vi.fn>;
+  liveEdgeSeconds: { (): number };
+  currentTimeSeconds: { (): number };
+  latencySeconds: { (): number };
+  bufferAheadSeconds: { (): number };
 }
 
 interface TrackPlaybackErrorUseCaseMock {
@@ -43,6 +48,7 @@ describe('Dashboard', () => {
   let trackPlaybackErrorUseCaseMock: TrackPlaybackErrorUseCaseMock;
   let getChannelEpgUseCaseMock: GetChannelEpgUseCaseMock;
   let getUserInfoUseCaseMock: { execute: ReturnType<typeof vi.fn> };
+  let getUserSettingsUseCaseMock: { execute: ReturnType<typeof vi.fn> };
   let router: Router;
 
   beforeEach(async () => {
@@ -60,6 +66,10 @@ describe('Dashboard', () => {
     videoPlaybackPortMock = {
       start: vi.fn(),
       destroy: vi.fn(),
+      liveEdgeSeconds: vi.fn(() => 30),
+      currentTimeSeconds: vi.fn(() => 25),
+      latencySeconds: vi.fn(() => 5),
+      bufferAheadSeconds: vi.fn(() => 20),
     };
 
     trackPlaybackErrorUseCaseMock = {
@@ -77,6 +87,10 @@ describe('Dashboard', () => {
       })),
     };
 
+    getUserSettingsUseCaseMock = {
+      execute: vi.fn(() => ({})),
+    };
+
     await TestBed.configureTestingModule({
       imports: [Dashboard],
       providers: [
@@ -87,6 +101,7 @@ describe('Dashboard', () => {
         { provide: TrackPlaybackErrorUseCase, useValue: trackPlaybackErrorUseCaseMock },
         { provide: GetChannelEpgUseCase, useValue: getChannelEpgUseCaseMock },
         { provide: GetUserInfoUseCase, useValue: getUserInfoUseCaseMock },
+        { provide: GetUserSettingsUseCase, useValue: getUserSettingsUseCaseMock },
         { provide: VIDEO_PLAYBACK_PORT, useValue: videoPlaybackPortMock },
         { provide: EPG_REPOSITORY, useValue: { getChannelGuide: vi.fn(() => Promise.resolve([])) } },
       ],
